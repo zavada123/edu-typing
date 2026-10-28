@@ -18,6 +18,14 @@
 
 ### React-компонент
 
+Пакет поставляється як вихідний код TypeScript (його збирає Vite або інший бандлер застосунку):
+
+```sh
+pnpm add github:zavada123/edu-typing#<commit>
+```
+
+`edu-typing/core` — лише ядро без React (уроки, розкладки, підрахунок).
+
 ```tsx
 import { TypingTrainer, lessons } from "edu-typing"
 
