@@ -60,7 +60,8 @@ export const TypingTrainer = ({ lesson, onComplete, large = false }: Props) => {
   const [pressed, setPressed] = useState<ReadonlySet<string>>(new Set())
   const boxRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => boxRef.current?.focus(), [])
+  // preventScroll: the trainer may sit low on a long page; focus must not jump there.
+  useEffect(() => boxRef.current?.focus({ preventScroll: true }), [])
 
   const running = session.startedAt !== undefined && !isFinished(session)
   useEffect(() => {

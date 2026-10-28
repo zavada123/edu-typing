@@ -15,7 +15,8 @@
   box-sizing: border-box;
   background: var(--edu-bg);
   color: var(--edu-fg);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* The host page font: Nunito in EduProstir, system-ui in the demo. */
+  font-family: inherit;
   border-radius: 12px;
   outline: none;
 }
