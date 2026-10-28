@@ -1,0 +1,231 @@
+.edu-typing {
+  --edu-bg: #f8fafc;
+  --edu-fg: #0f172a;
+  --edu-muted: #64748b;
+  --edu-done: #16a34a;
+  --edu-wrong: #dc2626;
+  --edu-accent: #2563eb;
+  --edu-text-size: clamp(20px, 4.5vw, 30px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px;
+  box-sizing: border-box;
+  background: var(--edu-bg);
+  color: var(--edu-fg);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  border-radius: 12px;
+  outline: none;
+}
+
+.edu-typing:focus-visible {
+  box-shadow: 0 0 0 3px var(--edu-accent);
+}
+
+.edu-typing-large {
+  --edu-text-size: clamp(26px, 6vw, 42px);
+}
+
+.edu-typing-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+}
+
+.edu-typing-stats {
+  color: var(--edu-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.edu-typing-hint,
+.edu-typing-next {
+  margin: 0;
+  min-height: 1.4em;
+  color: var(--edu-muted);
+}
+
+.edu-typing-next {
+  color: var(--edu-fg);
+  font-weight: 600;
+}
+
+.edu-typing-text {
+  margin: 0;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: var(--edu-text-size);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.edu-typing-done {
+  color: var(--edu-done);
+}
+
+.edu-typing-current {
+  background: #dbeafe;
+  border-bottom: 3px solid var(--edu-accent);
+  border-radius: 3px;
+}
+
+.edu-typing-current-wrong {
+  background: #fee2e2;
+  border-bottom-color: var(--edu-wrong);
+  color: var(--edu-wrong);
+}
+
+.edu-typing-result {
+  text-align: center;
+}
+
+.edu-typing-stars {
+  margin: 0;
+  font-size: 48px;
+  color: #f59e0b;
+  letter-spacing: 6px;
+}
+
+.edu-typing-stars-off {
+  color: #cbd5e1;
+}
+
+.edu-typing-verdict {
+  margin: 4px 0 12px;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.edu-typing-numbers {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.edu-typing-numbers b {
+  font-size: 28px;
+}
+
+.edu-typing-numbers small {
+  display: block;
+  color: var(--edu-muted);
+}
+
+.edu-typing-worst {
+  color: var(--edu-muted);
+}
+
+.edu-typing-again {
+  min-height: 44px;
+  padding: 0 24px;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: var(--edu-accent);
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Keyboard: 15 key units wide, scales with the trainer width. */
+.edu-kb {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6cqi;
+  user-select: none;
+}
+
+.edu-kb-row {
+  display: flex;
+  gap: 0.6cqi;
+}
+
+.edu-kb-indent1 {
+  padding-left: 3.4cqi;
+}
+
+.edu-kb-indent2 {
+  padding-left: 5cqi;
+}
+
+.edu-kb-key {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 6.1cqi;
+  height: 6.1cqi;
+  min-height: 24px;
+  padding: 0;
+  font: inherit;
+  font-size: max(11px, 2.4cqi);
+  color: var(--edu-fg);
+  border: 1px solid rgb(15 23 42 / 0.15);
+  border-radius: 1cqi;
+  box-shadow: 0 2px 0 rgb(15 23 42 / 0.15);
+  touch-action: manipulation;
+}
+
+.edu-kb-wide {
+  width: 11.2cqi;
+  font-size: max(10px, 1.8cqi);
+}
+
+.edu-kb-space {
+  width: 40cqi;
+  margin-left: 24cqi;
+}
+
+.edu-kb-bump {
+  position: absolute;
+  bottom: 18%;
+  width: 22%;
+  height: 2px;
+  background: currentColor;
+  border-radius: 1px;
+}
+
+/* Fingers by colour, the same scheme on both hands. */
+.edu-kb-leftPinky,
+.edu-kb-rightPinky {
+  background: #fde2e4;
+}
+.edu-kb-leftRing,
+.edu-kb-rightRing {
+  background: #fff1c1;
+}
+.edu-kb-leftMiddle,
+.edu-kb-rightMiddle {
+  background: #d9f2d9;
+}
+.edu-kb-leftIndex {
+  background: #d6e8ff;
+}
+.edu-kb-rightIndex {
+  background: #e6dcff;
+}
+.edu-kb-thumb {
+  background: #eef2f6;
+}
+
+.edu-kb-target {
+  outline: 3px solid var(--edu-accent);
+  outline-offset: 1px;
+  transform: translateY(-1px);
+  font-weight: 700;
+}
+
+.edu-kb-wrong {
+  outline-color: var(--edu-wrong);
+}
