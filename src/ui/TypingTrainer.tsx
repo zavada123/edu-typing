@@ -57,6 +57,7 @@ export const TypingTrainer = ({ lesson, onComplete, large = false }: Props) => {
   const [wrongLayout, setWrongLayout] = useState(false)
   const [usedTouch, setUsedTouch] = useState(false)
   const [report, setReport] = useState<Report>()
+  const [pressed, setPressed] = useState<ReadonlySet<string>>(new Set())
   const boxRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => boxRef.current?.focus(), [])
@@ -91,9 +92,15 @@ export const TypingTrainer = ({ lesson, onComplete, large = false }: Props) => {
   }
 
   const onKeyDown = (e: KeyboardEvent) => {
+    if (e.code && !pressed.has(e.code)) setPressed(new Set([...pressed, e.code]))
     if (e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return
     e.preventDefault()
     type(e.key, false)
+  }
+
+  const onKeyUp = (e: KeyboardEvent) => {
+    if (!pressed.has(e.code)) return
+    setPressed(new Set([...pressed].filter((c) => c !== e.code)))
   }
 
   const restart = () => {
@@ -110,7 +117,7 @@ export const TypingTrainer = ({ lesson, onComplete, large = false }: Props) => {
   const rootClass = large ? "edu-typing edu-typing-large" : "edu-typing"
 
   return (
-    <div className={rootClass} ref={boxRef} tabIndex={0} onKeyDown={onKeyDown}>
+    <div className={rootClass} ref={boxRef} tabIndex={0} onKeyDown={onKeyDown} onKeyUp={onKeyUp} onBlur={() => setPressed(new Set())}>
       <header className="edu-typing-head">
         <strong>{lesson.title}</strong>
         <span className="edu-typing-stats">
@@ -150,6 +157,7 @@ export const TypingTrainer = ({ lesson, onComplete, large = false }: Props) => {
         target={report ? undefined : target?.key.code}
         shift={report || !target?.shift ? undefined : shiftSide(target.key.finger)}
         wrong={session.lastWrong}
+        pressed={pressed}
         onTap={(c) => type(target?.shift && c === target.key.base ? target.key.shift : c, true)}
       />
     </div>

@@ -1,4 +1,4 @@
-import type { Key, Layout } from "../core/index.ts"
+import { EN, UK, type Finger, type Key, type Layout } from "../core/index.ts"
 
 interface Props {
   readonly layout: Layout
@@ -7,62 +7,125 @@ interface Props {
   /** "ShiftLeft" or "ShiftRight" when the next character needs Shift. */
   readonly shift?: string | undefined
   readonly wrong?: boolean
+  /** Physical keys held down right now: drawn pressed. */
+  readonly pressed?: ReadonlySet<string>
   /** Tap on a key types its character: the fallback for phones without a keyboard. */
   readonly onTap?: (char: string) => void
 }
 
+/** A key that types nothing: Tab, Shift, Ctrl… Width in key units, a row is 15 units. */
+interface Modifier {
+  readonly code: string
+  readonly label: string
+  readonly width: number
+  readonly finger?: Finger
+}
+
+const mod = (code: string, label: string, width: number, finger?: Finger): Modifier =>
+  finger ? { code, label, width, finger } : { code, label, width }
+
+/** Modifiers at the start and end of each row, as on a standard 104-key keyboard. */
+const ROW_EDGES: readonly (readonly [readonly Modifier[], readonly Modifier[]])[] = [
+  [[], [mod("Backspace", "⟵ Backspace", 2, "rightPinky")]],
+  [[mod("Tab", "Tab ⇥", 1.5, "leftPinky")], []],
+  [[mod("CapsLock", "Caps Lock", 1.75, "leftPinky")], [mod("Enter", "Enter ↵", 2.25, "rightPinky")]],
+  [[mod("ShiftLeft", "⇧ Shift", 2.25, "leftPinky")], [mod("ShiftRight", "⇧ Shift", 2.75, "rightPinky")]],
+  [
+    [mod("ControlLeft", "Ctrl", 1.25), mod("MetaLeft", "⊞", 1.25), mod("AltLeft", "Alt", 1.25)],
+    [mod("AltRight", "Alt Gr", 1.25), mod("MetaRight", "⊞", 1.25), mod("ContextMenu", "☰", 1.25), mod("ControlRight", "Ctrl", 1.25)]
+  ]
+]
+
+/** Character keys wider than one unit. */
+const WIDTHS: Readonly<Record<string, number>> = { Backslash: 1.5, Space: 6.25 }
+
 /** Keys with a bump for the index fingers. */
 const BUMPS = new Set(["KeyF", "KeyJ"])
 
-const label = (key: Key): string => (key.base.toUpperCase() !== key.base ? key.base.toUpperCase() : key.base)
+const isLetter = (c: string): boolean => c.toUpperCase() !== c.toLowerCase()
 
-/** On-screen keyboard: fingers by colour, the next key highlighted. */
-export const Keyboard = ({ layout, target, shift, wrong = false, onTap }: Props) => {
-  const keyClass = (code: string, finger: string, extra = "") =>
+/** Real keyboard look: keycaps with Latin and Cyrillic, fingers as a coloured strip. */
+export const Keyboard = ({ layout, target, shift, wrong = false, pressed, onTap }: Props) => {
+  const other = layout.id === "uk" ? EN : UK
+  const otherByCode = new Map(other.rows.flat().map((k) => [k.code, k]))
+
+  const capClass = (code: string, finger: Finger | undefined, extra: string) =>
     [
       "edu-kb-key",
-      `edu-kb-${finger}`,
+      finger ? `edu-kb-${finger}` : "edu-kb-nofinger",
       code === target || code === shift ? "edu-kb-target" : "",
       wrong && code === target ? "edu-kb-wrong" : "",
+      pressed?.has(code) ? "edu-kb-down" : "",
       extra
     ]
       .filter(Boolean)
       .join(" ")
 
+  const legend = (key: Key) => {
+    if (key.code === "Space") return null
+    const second = otherByCode.get(key.code)
+    if (isLetter(key.base)) {
+      // Like printed Ukrainian keyboards: Latin in the corner, the active alphabet big.
+      return (
+        <>
+          <span className="edu-kb-main">{key.base.toUpperCase()}</span>
+          {second && isLetter(second.base) && <span className="edu-kb-alt">{second.base.toUpperCase()}</span>}
+        </>
+      )
+    }
+    return (
+      <>
+        <span className="edu-kb-top">{key.shift}</span>
+        <span className="edu-kb-bottom">{key.base}</span>
+      </>
+    )
+  }
+
   const charKey = (key: Key) => (
-    <button
-      key={key.code}
-      type="button"
-      tabIndex={-1}
-      className={keyClass(key.code, key.finger, key.code === "Space" ? "edu-kb-space" : "")}
-      onPointerDown={(e) => {
-        e.preventDefault()
-        onTap?.(key.base)
-      }}
-    >
-      {key.code === "Space" ? "" : label(key)}
-      {BUMPS.has(key.code) && <span className="edu-kb-bump" aria-hidden="true" />}
-    </button>
+    <div key={key.code} className="edu-kb-slot" style={{ width: `calc(${WIDTHS[key.code] ?? 1} * var(--edu-kb-u))` }}>
+      <button
+        type="button"
+        tabIndex={-1}
+        className={capClass(key.code, key.finger, isLetter(key.base) ? "edu-kb-letter" : "")}
+        onPointerDown={(e) => {
+          e.preventDefault()
+          onTap?.(key.base)
+        }}
+      >
+        {legend(key)}
+        {BUMPS.has(key.code) && <span className="edu-kb-bump" aria-hidden="true" />}
+      </button>
+    </div>
   )
 
-  const shiftKey = (code: "ShiftLeft" | "ShiftRight") => (
-    <span key={code} className={keyClass(code, code === "ShiftLeft" ? "leftPinky" : "rightPinky", "edu-kb-wide")}>
-      Shift
-    </span>
+  const modKey = (m: Modifier) => (
+    <div key={m.code} className="edu-kb-slot" style={{ width: `calc(${m.width} * var(--edu-kb-u))` }}>
+      <span className={capClass(m.code, m.finger, "edu-kb-mod")}>{m.label}</span>
+    </div>
   )
 
-  const [digits, top, home, bottom, space] = layout.rows
   return (
     <div className="edu-kb" aria-hidden="true">
-      <div className="edu-kb-row">{digits?.map(charKey)}</div>
-      <div className="edu-kb-row edu-kb-indent1">{top?.map(charKey)}</div>
-      <div className="edu-kb-row edu-kb-indent2">{home?.map(charKey)}</div>
-      <div className="edu-kb-row">
-        {shiftKey("ShiftLeft")}
-        {bottom?.map(charKey)}
-        {shiftKey("ShiftRight")}
+      <div className="edu-kb-case">
+        {layout.rows.map((row, r) => {
+          const [left = [], right = []] = ROW_EDGES[r] ?? []
+          return (
+            <div className="edu-kb-row" key={r}>
+              {left.map(modKey)}
+              {row.map(charKey)}
+              {right.map(modKey)}
+            </div>
+          )
+        })}
       </div>
-      <div className="edu-kb-row">{space?.map(charKey)}</div>
+      <ul className="edu-kb-legend">
+        <li className="edu-kb-leftPinky">мізинці</li>
+        <li className="edu-kb-leftRing">безіменні</li>
+        <li className="edu-kb-leftMiddle">середні</li>
+        <li className="edu-kb-leftIndex">лівий вказівний</li>
+        <li className="edu-kb-rightIndex">правий вказівний</li>
+        <li className="edu-kb-thumb">великі</li>
+      </ul>
     </div>
   )
 }

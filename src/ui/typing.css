@@ -137,95 +137,221 @@
   cursor: pointer;
 }
 
-/* Keyboard: 15 key units wide, scales with the trainer width. */
+/* Keyboard: a 15-unit wide case like a real 104-key board, scales with the trainer width. */
 .edu-kb {
   container-type: inline-size;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6cqi;
   user-select: none;
+  -webkit-user-select: none;
+}
+
+.edu-kb-case {
+  --edu-kb-pad: 1.4cqi;
+  --edu-kb-u: calc((100cqi - 2 * var(--edu-kb-pad)) / 15);
+  padding: var(--edu-kb-pad);
+  background: linear-gradient(180deg, #3a3f47, #23272d);
+  border-radius: 1.6cqi;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    0 6px 16px rgb(15 23 42 / 0.35);
 }
 
 .edu-kb-row {
   display: flex;
-  gap: 0.6cqi;
 }
 
-.edu-kb-indent1 {
-  padding-left: 3.4cqi;
-}
-
-.edu-kb-indent2 {
-  padding-left: 5cqi;
+.edu-kb-slot {
+  flex: none;
+  height: calc(var(--edu-kb-u) * 0.96);
+  padding: 0.22cqi;
+  box-sizing: border-box;
 }
 
 .edu-kb-key {
+  --edu-kb-finger: transparent;
   position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: max(9px, 1.9cqi);
+  line-height: 1;
+  color: #1f2937;
+  background: linear-gradient(180deg, #ffffff 0%, #eceef1 70%, #dfe2e6 100%);
+  border: 0;
+  border-radius: 0.7cqi;
+  /* Bottom edge of the keycap plus the finger strip. */
+  box-shadow:
+    inset 0 -0.55cqi 0 var(--edu-kb-finger),
+    0 0.45cqi 0 #9aa1ab,
+    0 0.55cqi 0.6cqi rgb(0 0 0 / 0.45);
+  transform: translateY(-0.2cqi);
+  transition: transform 60ms, box-shadow 60ms;
+  touch-action: manipulation;
+  cursor: default;
+}
+
+.edu-kb-mod {
+  display: flex;
+  align-items: flex-end;
+  padding: 0 0 1.1cqi 0.9cqi;
+  font-size: max(8px, 1.45cqi);
+  color: #4b5563;
+  background: linear-gradient(180deg, #e9ebee 0%, #d6d9de 100%);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* Letters: the active alphabet large in the middle, the other one small in the corner. */
+.edu-kb-main {
+  position: absolute;
+  inset: 0 0 0.5cqi;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 6.1cqi;
-  height: 6.1cqi;
-  min-height: 24px;
-  padding: 0;
-  font: inherit;
-  font-size: max(11px, 2.4cqi);
-  color: var(--edu-fg);
-  border: 1px solid rgb(15 23 42 / 0.15);
-  border-radius: 1cqi;
-  box-shadow: 0 2px 0 rgb(15 23 42 / 0.15);
-  touch-action: manipulation;
+  font-size: max(12px, 2.5cqi);
+  font-weight: 600;
 }
 
-.edu-kb-wide {
-  width: 11.2cqi;
-  font-size: max(10px, 1.8cqi);
+.edu-kb-alt {
+  position: absolute;
+  top: 0.55cqi;
+  left: 0.7cqi;
+  font-size: max(7px, 1.25cqi);
+  color: #6b7280;
 }
 
-.edu-kb-space {
-  width: 40cqi;
-  margin-left: 24cqi;
+/* Digits and punctuation: Shift symbol above, plain symbol below. */
+.edu-kb-top,
+.edu-kb-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+}
+
+.edu-kb-top {
+  top: 0.7cqi;
+  font-size: max(8px, 1.5cqi);
+  color: #6b7280;
+}
+
+.edu-kb-bottom {
+  bottom: 1.2cqi;
+  font-size: max(10px, 2.1cqi);
 }
 
 .edu-kb-bump {
   position: absolute;
-  bottom: 18%;
-  width: 22%;
-  height: 2px;
-  background: currentColor;
+  left: 38%;
+  right: 38%;
+  bottom: 1.3cqi;
+  height: 0.3cqi;
+  min-height: 2px;
+  background: #6b7280;
   border-radius: 1px;
 }
 
 /* Fingers by colour, the same scheme on both hands. */
 .edu-kb-leftPinky,
 .edu-kb-rightPinky {
-  background: #fde2e4;
+  --edu-kb-finger: #f472b6;
 }
 .edu-kb-leftRing,
 .edu-kb-rightRing {
-  background: #fff1c1;
+  --edu-kb-finger: #fbbf24;
 }
 .edu-kb-leftMiddle,
 .edu-kb-rightMiddle {
-  background: #d9f2d9;
+  --edu-kb-finger: #4ade80;
 }
 .edu-kb-leftIndex {
-  background: #d6e8ff;
+  --edu-kb-finger: #60a5fa;
 }
 .edu-kb-rightIndex {
-  background: #e6dcff;
+  --edu-kb-finger: #a78bfa;
 }
 .edu-kb-thumb {
-  background: #eef2f6;
+  --edu-kb-finger: #94a3b8;
 }
 
 .edu-kb-target {
-  outline: 3px solid var(--edu-accent);
-  outline-offset: 1px;
-  transform: translateY(-1px);
-  font-weight: 700;
+  background: linear-gradient(180deg, #eff6ff 0%, #bfdbfe 100%);
+  box-shadow:
+    inset 0 -0.55cqi 0 var(--edu-kb-finger),
+    0 0.45cqi 0 #3b82f6,
+    0 0 0 0.35cqi #60a5fa,
+    0 0 2cqi #60a5fa;
+  color: #1e3a8a;
 }
 
 .edu-kb-wrong {
-  outline-color: var(--edu-wrong);
+  background: linear-gradient(180deg, #fef2f2 0%, #fecaca 100%);
+  box-shadow:
+    inset 0 -0.55cqi 0 var(--edu-kb-finger),
+    0 0.45cqi 0 #dc2626,
+    0 0 0 0.35cqi #f87171;
+}
+
+/* Held down: the keycap sinks onto its base. */
+.edu-kb-down {
+  transform: translateY(0.25cqi);
+  box-shadow:
+    inset 0 -0.55cqi 0 var(--edu-kb-finger),
+    0 0.05cqi 0 #9aa1ab;
+}
+
+.edu-kb-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--edu-muted);
+}
+
+.edu-kb-legend li::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 5px;
+  vertical-align: -1px;
+  background: var(--edu-kb-finger);
+  border-radius: 3px;
+}
+
+/* Phones: keys are tiny, so keep only the main character and make keys taller. */
+@container (max-width: 560px) {
+  .edu-kb-case {
+    --edu-kb-pad: 1cqi;
+  }
+  .edu-kb-slot {
+    height: calc(var(--edu-kb-u) * 1.35);
+    padding: 0.35cqi 0.2cqi;
+  }
+  .edu-kb-alt,
+  .edu-kb-top,
+  .edu-kb-mod {
+    font-size: 0;
+  }
+  .edu-kb-alt,
+  .edu-kb-top {
+    display: none;
+  }
+  .edu-kb-main,
+  .edu-kb-bottom {
+    font-size: 3.6cqi;
+  }
+  .edu-kb-bottom {
+    top: 0;
+    bottom: 0.5cqi;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
