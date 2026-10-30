@@ -81,3 +81,7 @@ export const result = (s: Session, now: number): Result => {
     durationMs
   }
 }
+
+/** End the run early, e.g. when the time of a timed test is up. A run that has not started stays as it is. */
+export const stop = (s: Session, now: number): Session =>
+  s.startedAt === undefined || isFinished(s) ? s : { ...s, finishedAt: now, lastWrong: false }

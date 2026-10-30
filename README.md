@@ -40,6 +40,11 @@ The student-facing interface is in Ukrainian. It was built for [EduProstir](http
 - **Results:** characters per minute, words per minute, accuracy, time, most frequent mistakes, 0–3 stars.
 - **Large mode** for younger students.
 - **Works on phones:** the on-screen keys can be tapped. Such a result is marked `input: "touch"`, so your app can choose not to grade it.
+- **Full course:** 28 Ukrainian lessons (home row, top row, bottom row, apostrophe, comma, digits, punctuation, texts) and 19 English lessons. Each lesson adds a few keys and uses only keys learned before; the tests check this.
+- **Progress in the browser:** stars per lesson, the next lesson opens after the previous one, a "Continue" button, and a heat map of the keys with the most mistakes.
+- **Adaptive practice:** a fresh exercise from the keys the student knows, with more words that contain their weak keys.
+- **Two typing games:** *Letterfall* (letters fall from the sky, press the key before a letter lands) and *Balloons* (words float up, type a word to pop its balloon). The games speed up with each level and keep a high score.
+- **Speed test and certificate:** a 1- or 3-minute test. A result above a level (Bronze 60 cpm / 90%, Silver 100 / 94%, Gold 150 / 96%, Platinum 220 / 98%) gives an A4 certificate with the student name, to print or save as PDF.
 - **Framework-free core:** lessons, layouts and scoring are pure functions you can reuse with any UI.
 
 ## Installation
@@ -54,7 +59,22 @@ Peer dependencies: `react` and `react-dom` 19 or newer.
 
 ## Usage
 
-### React component
+### The whole trainer
+
+```tsx
+import { TypingStudio } from "edu-typing"
+
+<TypingStudio
+  issuer="EduProstir"
+  studentName="Олена Петренко"
+  storageKey={`edu-typing:${studentId}`}
+  onCertificate={(certificate) => saveToStudentAccount(certificate)}
+/>
+```
+
+Tabs: lessons, games, and the speed test with a certificate. Progress is kept in `localStorage` under `storageKey`. `onCertificate` gets the level, speed, accuracy, date and the number printed on the certificate, so your app can keep a list of certificates for the student.
+
+### One lesson
 
 ```tsx
 import { TypingTrainer, lessons } from "edu-typing"
@@ -111,7 +131,8 @@ const lesson: Lesson = {
   title: "Основний ряд: В і Л",
   hint: "Середні пальці лежать на В і Л.",
   text: "ввв ллл вл лв ава оло вал лав",
-  goal: { minCpm: 40, minAccuracy: 90 }
+  goal: { minCpm: 40, minAccuracy: 90 },
+  newKeys: "вл"
 }
 ```
 
@@ -121,8 +142,8 @@ Stars: one for meeting the goal, one more for 1.5× the goal speed, and one more
 
 | Entry point | Contents |
 |---|---|
-| `edu-typing` | `TypingTrainer`, `Keyboard`, the `Report` type, and everything from the core |
-| `edu-typing/core` | `lessons`, `LAYOUTS` (`UK`, `EN`), `findKey`, `isWrongLayout`, the session functions (`createSession`, `press`, `result`) and `score`. No React |
+| `edu-typing` | `TypingStudio`, `TypingTrainer`, `TypingTest`, `CourseView`, `LetterfallGame`, `BalloonsGame`, `CertificateView`, `Keyboard`, `useProgress`, and everything from the core |
+| `edu-typing/core` | `units`, `lessons`, `LAYOUTS` (`UK`, `EN`), `findKey`, `isWrongLayout`, the session functions (`createSession`, `press`, `stop`, `result`), `score`, progress (`recordLesson`, `weakKeys`, `heatByCode`, `isUnlocked`), generated texts (`practiceLesson`, `testText`), certificate levels (`LEVELS`, `certificateLevel`), and the game state machines. No React |
 
 ### `<TypingTrainer>` props
 
@@ -131,6 +152,8 @@ Stars: one for meeting the goal, one more for 1.5× the goal speed, and one more
 | `lesson` | `Lesson` | The exercise to type |
 | `onComplete` | `(report: Report) => void` | Called when the student finishes the text |
 | `large` | `boolean` | Bigger text and keys for younger students. Default `false` |
+| `timeLimitMs` | `number` | Timed run: ends when the time is up, even in the middle of the text |
+| `heat` | `ReadonlyMap<string, number>` | Error rate 0–1 by key code, painted on the keyboard |
 
 ### `Report`
 

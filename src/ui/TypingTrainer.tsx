@@ -10,6 +10,7 @@ import {
   result,
   score,
   shiftSide,
+  stop,
   type Finger,
   type Lesson,
   type Result,
@@ -31,6 +32,10 @@ interface Props {
   readonly onComplete?: (report: Report) => void
   /** Bigger text and keys for grades 1–4. */
   readonly large?: boolean
+  /** Timed run (speed test): the run ends when the time is up, even in the middle of the text. */
+  readonly timeLimitMs?: number
+  /** Error rate 0–1 by key code: paints the keys where the student often makes mistakes. */
+  readonly heat?: ReadonlyMap<string, number>
 }
 
 const FINGER_NAMES: Readonly<Record<Finger, string>> = {
@@ -49,8 +54,23 @@ const LIVE_TICK_MS = 500
 
 const showChar = (c: string): string => (c === " " ? "пробіл" : `«${c}»`)
 
+/** Long texts (a timed test) show only a window around the cursor. */
+const WINDOW_BEFORE = 40
+const WINDOW_AFTER = 220
+
+const textWindow = (text: string, position: number): [number, number] => {
+  if (text.length <= WINDOW_BEFORE + WINDOW_AFTER) return [0, text.length]
+  const from = Math.max(0, text.lastIndexOf(" ", Math.max(0, position - WINDOW_BEFORE)) + 1)
+  return [Math.min(from, position), Math.min(text.length, position + WINDOW_AFTER)]
+}
+
+const formatClock = (ms: number): string => {
+  const total = Math.max(0, Math.ceil(ms / 1000))
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`
+}
+
 /** Typing exercise: text, live speed, on-screen keyboard, result at the end. */
-export const TypingTrainer = ({ lesson, onComplete, large = false }: Props) => {
+export const TypingTrainer = ({ lesson, onComplete, large = false, timeLimitMs, heat }: Props) => {
   const layout = LAYOUTS[lesson.layout]
   const [session, setSession] = useState<Session>(() => createSession(lesson.text))
   const [now, setNow] = useState(() => performance.now())
@@ -66,9 +86,27 @@ export const TypingTrainer = ({ lesson, onComplete, large = false }: Props) => {
   const running = session.startedAt !== undefined && !isFinished(session)
   useEffect(() => {
     if (!running) return undefined
-    const id = window.setInterval(() => setNow(performance.now()), LIVE_TICK_MS)
+    const id = window.setInterval(() => setNow(performance.now()), timeLimitMs === undefined ? LIVE_TICK_MS : LIVE_TICK_MS / 5)
     return () => window.clearInterval(id)
-  }, [running])
+  }, [running, timeLimitMs])
+
+  const complete = (next: Session, t: number, touchUsed: boolean) => {
+    const r = result(next, t)
+    const done: Report = { ...r, ...score(r, lesson.goal), lessonId: lesson.id, input: touchUsed ? "touch" : "keyboard" }
+    setReport(done)
+    onComplete?.(done)
+  }
+
+  // Timed test: stop the run when the time is up.
+  const timeUp = running && timeLimitMs !== undefined && session.startedAt !== undefined && now - session.startedAt >= timeLimitMs
+  useEffect(() => {
+    if (!timeUp || session.startedAt === undefined || timeLimitMs === undefined) return
+    const end = session.startedAt + timeLimitMs
+    const next = stop(session, end)
+    setSession(next)
+    complete(next, end, usedTouch)
+    // complete() only reads the current props; running it once per time-up is enough.
+  }, [timeUp])
 
   const type = (char: string, touch: boolean) => {
     if (isFinished(session)) return
@@ -84,12 +122,7 @@ export const TypingTrainer = ({ lesson, onComplete, large = false }: Props) => {
     setSession(next)
     setUsedTouch(touchUsed)
     setNow(t)
-    if (isFinished(next)) {
-      const r = result(next, t)
-      const done: Report = { ...r, ...score(r, lesson.goal), lessonId: lesson.id, input: touchUsed ? "touch" : "keyboard" }
-      setReport(done)
-      onComplete?.(done)
-    }
+    if (isFinished(next)) complete(next, t, touchUsed)
   }
 
   const onKeyDown = (e: KeyboardEvent) => {
@@ -115,6 +148,8 @@ export const TypingTrainer = ({ lesson, onComplete, large = false }: Props) => {
   const expected = expectedChar(session)
   const target = expected === undefined ? undefined : findKey(layout, expected)
   const live = result(session, now)
+  const [from, to] = textWindow(session.text, session.position)
+  const left = timeLimitMs === undefined ? undefined : timeLimitMs - (session.startedAt === undefined ? 0 : now - session.startedAt)
   const rootClass = large ? "edu-typing edu-typing-large" : "edu-typing"
 
   return (
@@ -122,6 +157,7 @@ export const TypingTrainer = ({ lesson, onComplete, large = false }: Props) => {
       <header className="edu-typing-head">
         <strong>{lesson.title}</strong>
         <span className="edu-typing-stats">
+          {left !== undefined && <b className="edu-typing-clock">{formatClock(left)} · </b>}
           {live.cpm} зн/хв · точність {live.accuracy}% · помилок {live.mistakes}
         </span>
       </header>
@@ -134,13 +170,15 @@ export const TypingTrainer = ({ lesson, onComplete, large = false }: Props) => {
             {session.startedAt === undefined ? lesson.hint : " "}
           </p>
           <p className="edu-typing-text" aria-label={lesson.text}>
-            <span className="edu-typing-done">{session.text.slice(0, session.position)}</span>
+            {from > 0 && <span className="edu-typing-more">… </span>}
+            <span className="edu-typing-done">{session.text.slice(from, session.position)}</span>
             {expected !== undefined && (
               <span className={session.lastWrong ? "edu-typing-current edu-typing-current-wrong" : "edu-typing-current"}>
                 {expected === " " ? "␣" : expected}
               </span>
             )}
-            <span>{session.text.slice(session.position + 1)}</span>
+            <span>{session.text.slice(session.position + 1, to)}</span>
+            {to < session.text.length && <span className="edu-typing-more"> …</span>}
           </p>
           <p className="edu-typing-next" role="status">
             {wrongLayout
@@ -159,6 +197,7 @@ export const TypingTrainer = ({ lesson, onComplete, large = false }: Props) => {
         shift={report || !target?.shift ? undefined : shiftSide(target.key.finger)}
         wrong={session.lastWrong}
         pressed={pressed}
+        heat={report ? undefined : heat}
         onTap={(c) => type(target?.shift && c === target.key.base ? target.key.shift : c, true)}
       />
     </div>

@@ -9,6 +9,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 100%;
   max-width: 960px;
   margin: 0 auto;
   padding: 16px;
@@ -355,4 +356,21 @@
     align-items: center;
     justify-content: center;
   }
+}
+
+.edu-typing-clock {
+  color: var(--edu-fg);
+}
+
+.edu-typing-more {
+  color: var(--edu-muted);
+}
+
+/* Heat map: keys with many mistakes glow red. --edu-kb-heat is 0–1. */
+.edu-kb-hot {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, #fecaca calc(var(--edu-kb-heat) * 100%), #ffffff) 0%,
+    color-mix(in srgb, #f87171 calc(var(--edu-kb-heat) * 100%), #dfe2e6) 100%
+  );
 }

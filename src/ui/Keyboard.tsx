@@ -11,6 +11,8 @@ interface Props {
   readonly pressed?: ReadonlySet<string>
   /** Tap on a key types its character: the fallback for phones without a keyboard. */
   readonly onTap?: (char: string) => void
+  /** Error rate 0–1 by key code: the key gets a red glow, stronger for more mistakes. */
+  readonly heat?: ReadonlyMap<string, number> | undefined
 }
 
 /** A key that types nothing: Tab, Shift, Ctrl… Width in key units, a row is 15 units. */
@@ -45,9 +47,12 @@ const BUMPS = new Set(["KeyF", "KeyJ"])
 const isLetter = (c: string): boolean => c.toUpperCase() !== c.toLowerCase()
 
 /** Real keyboard look: keycaps with Latin and Cyrillic, fingers as a coloured strip. */
-export const Keyboard = ({ layout, target, shift, wrong = false, pressed, onTap }: Props) => {
+export const Keyboard = ({ layout, target, shift, wrong = false, pressed, onTap, heat }: Props) => {
   const other = layout.id === "uk" ? EN : UK
   const otherByCode = new Map(other.rows.flat().map((k) => [k.code, k]))
+
+  // 25% wrong presses is already a very hard key: full colour.
+  const heatOf = (code: string): number => Math.min(1, (heat?.get(code) ?? 0) * 4)
 
   const capClass = (code: string, finger: Finger | undefined, extra: string) =>
     [
@@ -86,7 +91,8 @@ export const Keyboard = ({ layout, target, shift, wrong = false, pressed, onTap 
       <button
         type="button"
         tabIndex={-1}
-        className={capClass(key.code, key.finger, isLetter(key.base) ? "edu-kb-letter" : "")}
+        className={capClass(key.code, key.finger, [isLetter(key.base) ? "edu-kb-letter" : "", heatOf(key.code) > 0 ? "edu-kb-hot" : ""].join(" "))}
+        style={heatOf(key.code) > 0 ? { ["--edu-kb-heat" as string]: String(heatOf(key.code)) } : undefined}
         onPointerDown={(e) => {
           e.preventDefault()
           onTap?.(key.base)
