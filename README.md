@@ -1,30 +1,60 @@
-# edu-typing — тренажер сліпого друку
+<h1 align="center">edu-typing</h1>
 
-Тренажер сліпого друку для дітей і дорослих, як Ratatype, але відкритий і вбудовуваний. Учень бачить текст, екранну клавіатуру з кольорами пальців і підказку, яким пальцем натиснути наступну клавішу. Наприкінці вправи тренажер віддає застосунку результат: швидкість, точність, помилки по літерах, зірки й «зараховано / ні».
+<p align="center">
+  <b>An embeddable touch-typing trainer for kids and adults.</b><br>
+  Ukrainian ЙЦУКЕН and English QWERTY layouts, finger hints on an on-screen keyboard, and a gradable result at the end of every exercise.
+</p>
 
-**Демо:** https://zavada123.github.io/edu-typing/
+<p align="center">
+  <a href="https://github.com/zavada123/edu-typing/actions/workflows/pages.yml"><img alt="Build and deploy" src="https://github.com/zavada123/edu-typing/actions/workflows/pages.yml/badge.svg?branch=main"></a>
+  <a href="https://zavada123.github.io/edu-typing/"><img alt="Live demo" src="https://img.shields.io/badge/demo-live-2ea44f?logo=githubpages&logoColor=white"></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white">
+  <img alt="React 19" src="https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=black">
+</p>
 
-## Що вміє
+<p align="center">
+  <a href="https://zavada123.github.io/edu-typing/"><b>Live demo</b></a> ·
+  <a href="https://github.com/zavada123/edu-typing/actions/workflows/pages.yml"><b>CI &amp; deploys</b></a> ·
+  <a href="#installation">Installation</a> ·
+  <a href="#usage">Usage</a> ·
+  <a href="#api">API</a>
+</p>
 
-- Українська розкладка ЙЦУКЕН (як «Українська (розширена)» у Windows: апостроф ліворуч від 1, Ґ поруч з Ї) і англійська QWERTY.
-- Курсор іде далі лише після правильної літери, кожне хибне натискання — помилка (як у Ratatype).
-- Підказка «Натисни «в»: лівий середній», а для великих літер ще й який Shift.
-- Якщо в системі ввімкнена не та мова (учень натискає латиницю в українському уроці), тренажер просить перемкнути мову й не рахує це помилкою.
-- Швидкість у знаках за хвилину, точність, час, найчастіші помилки, від 0 до 3 зірок.
-- Великий режим для молодших класів (`large`).
-- Працює на телефоні: клавіатуру можна натискати на екрані. Такий результат позначено `input: "touch"`, щоб застосунок не ставив за нього оцінку.
+<p align="center">
+  <a href="https://zavada123.github.io/edu-typing/"><img src="docs/screenshot.png" alt="edu-typing: lesson text above an on-screen keyboard with finger colours" width="800"></a>
+</p>
 
-## Як вбудувати
+## Why
 
-### React-компонент
+Typing trainers like Ratatype are great for learners, but they are closed: a school cannot embed them in its own platform or get the result back as a grade. `edu-typing` is an open, embeddable alternative. The student sees the text, an on-screen keyboard coloured by finger, and a hint for which finger presses the next key. When the exercise ends, your app receives speed, accuracy, per-letter mistakes, stars and a pass/fail verdict.
 
-Пакет поставляється як вихідний код TypeScript (його збирає Vite або інший бандлер застосунку):
+The student-facing interface is in Ukrainian. It was built for [EduProstir](https://eduprostir.com), a Ukrainian learning platform.
 
-```sh
-pnpm add github:zavada123/edu-typing#<commit>
+## Features
+
+- **Two layouts:** Ukrainian ЙЦУКЕН (like "Ukrainian (Enhanced)" in Windows: apostrophe left of 1, Ґ next to Ї) and English QWERTY.
+- **Strict mode, like Ratatype:** the cursor moves on only after the correct letter, and every wrong press counts as a mistake.
+- **Finger hints:** "Press «в»: left middle finger", plus which Shift to use for capital letters.
+- **Wrong-layout detection:** if the student types Latin letters in a Ukrainian lesson, the trainer asks them to switch the input language and does not count it as a mistake.
+- **Results:** characters per minute, words per minute, accuracy, time, most frequent mistakes, 0–3 stars.
+- **Large mode** for younger students.
+- **Works on phones:** the on-screen keys can be tapped. Such a result is marked `input: "touch"`, so your app can choose not to grade it.
+- **Framework-free core:** lessons, layouts and scoring are pure functions you can reuse with any UI.
+
+## Installation
+
+The package ships as TypeScript source and is compiled by your app's bundler (Vite, webpack, etc.). Install it straight from GitHub and pin a commit:
+
+```bash
+npm install github:zavada123/edu-typing#<commit>
 ```
 
-`edu-typing/core` — лише ядро без React (уроки, розкладки, підрахунок).
+Peer dependencies: `react` and `react-dom` 19 or newer.
+
+## Usage
+
+### React component
 
 ```tsx
 import { TypingTrainer, lessons } from "edu-typing"
@@ -36,7 +66,7 @@ import { TypingTrainer, lessons } from "edu-typing"
 />
 ```
 
-`report`:
+The `report` passed to `onComplete`:
 
 ```json
 {
@@ -51,6 +81,8 @@ import { TypingTrainer, lessons } from "edu-typing"
 
 ### iframe
 
+No React? Embed the hosted demo and listen for the result:
+
 ```html
 <iframe src="https://zavada123.github.io/edu-typing/?embed=1&lesson=uk-home-1&large=1"></iframe>
 <script>
@@ -60,12 +92,20 @@ import { TypingTrainer, lessons } from "edu-typing"
 </script>
 ```
 
-## Як описати урок
+| Query parameter | Description |
+|---|---|
+| `embed=1` | Hide the demo header and lesson picker |
+| `lesson=<id>` | Open this lesson |
+| `large=1` | Large mode |
 
-Урок — це об'єкт `Lesson` (`src/core/lessons.ts`):
+### Write a lesson
+
+A lesson is a `Lesson` object (see `src/core/lessons.ts`):
 
 ```ts
-{
+import type { Lesson } from "edu-typing/core"
+
+const lesson: Lesson = {
   id: "uk-home-2",
   layout: "uk",
   title: "Основний ряд: В і Л",
@@ -75,19 +115,46 @@ import { TypingTrainer, lessons } from "edu-typing"
 }
 ```
 
-Зірки: одна за виконану мету, ще одна за швидкість у 1,5 раза вищу за мету, ще одна за точність від 98%. Тести перевіряють, що текст кожного уроку набирається на його розкладці, а уроки основного ряду не виходять за ФІВА ОЛДЖ.
+Stars: one for meeting the goal, one more for 1.5× the goal speed, and one more for 98% accuracy or better. The test suite checks that every lesson can be typed on its layout and that home-row lessons stay within ФІВА ОЛДЖ.
 
-## Розробка
+## API
 
-```sh
+| Entry point | Contents |
+|---|---|
+| `edu-typing` | `TypingTrainer`, `Keyboard`, the `Report` type, and everything from the core |
+| `edu-typing/core` | `lessons`, `LAYOUTS` (`UK`, `EN`), `findKey`, `isWrongLayout`, the session functions (`createSession`, `press`, `result`) and `score`. No React |
+
+### `<TypingTrainer>` props
+
+| Prop | Type | Description |
+|---|---|---|
+| `lesson` | `Lesson` | The exercise to type |
+| `onComplete` | `(report: Report) => void` | Called when the student finishes the text |
+| `large` | `boolean` | Bigger text and keys for younger students. Default `false` |
+
+### `Report`
+
+| Field | Description |
+|---|---|
+| `lessonId` | Id of the lesson |
+| `cpm`, `wpm` | Correct characters per minute; words per minute (1 word = 5 characters) |
+| `accuracy` | Share of correct presses, 0–100 |
+| `mistakes`, `mistakesByChar` | Total mistakes and mistakes per expected character |
+| `chars`, `durationMs` | Characters typed and time taken |
+| `passed`, `stars` | Whether the lesson goal was met, and 0–3 stars |
+| `input` | `"keyboard"` or `"touch"` (tapped on screen) |
+
+## Development
+
+```bash
 npm install
-npm run dev        # демо на http://localhost:5173
+npm run dev        # demo at http://localhost:5173
 npm test           # Vitest
-npm run build      # перевірка типів і збірка демо в dist/
+npm run build      # type check and build the demo into dist/
 ```
 
-Ядро (`src/core`) — чисті функції без React: його можна використати й з іншим інтерфейсом.
+Every push to `main` runs the tests and deploys the demo to GitHub Pages: see the [workflow runs](https://github.com/zavada123/edu-typing/actions/workflows/pages.yml).
 
-## Ліцензія
+## License
 
-MIT
+[MIT](LICENSE)
