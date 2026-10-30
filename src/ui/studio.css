@@ -19,9 +19,8 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  /* In a flex column of the host page, auto margins would shrink the studio to its content. */
+  /* The studio fills the host container; in a flex column auto margins would shrink it to its content. */
   width: 100%;
-  max-width: 960px;
   margin: 0 auto;
 }
 
