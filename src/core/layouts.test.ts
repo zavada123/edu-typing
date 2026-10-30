@@ -52,9 +52,10 @@ describe("lessons", () => {
     "%s stays on the home row",
     (_, lesson) => {
       const layout = LAYOUTS[lesson.layout]
+      const middle = new Set(layout.rows[2]?.map((k) => k.code))
       const off = [...lesson.text].filter((c) => {
         const k = findKey(layout, c)?.key
-        return k !== undefined && !k.home && k.code !== "Space"
+        return k !== undefined && !middle.has(k.code) && k.code !== "Space"
       })
       expect(off).toEqual([])
     }
