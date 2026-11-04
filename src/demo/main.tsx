@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client"
 import { lessons } from "../core/index.ts"
 import { TypingStudio } from "../ui/TypingStudio.tsx"
 import { TypingTrainer, type Report } from "../ui/TypingTrainer.tsx"
+import { DuelDemo } from "./DuelDemo.tsx"
 import "./demo.css"
 
 const firstLesson = lessons[0]
@@ -12,6 +13,8 @@ const params = new URLSearchParams(window.location.search)
 /** ?embed=1 hides the demo header and sends the result to the parent page (iframe). */
 const embedded = params.get("embed") === "1"
 const large = params.get("large") === "1"
+/** ?duel=1 plays the network duel against a bot, with a relay in the page instead of the server. */
+const duel = params.get("duel") === "1"
 
 /** In an iframe the host page listens: window.addEventListener("message", e => e.data.type === "edu-typing:result"). */
 const sendToParent = (report: Report) => {
@@ -34,7 +37,7 @@ const Demo = () => {
         <strong>Тренажер друку</strong>
       </header>
       <main className="demo-main">
-        {id ? <TypingTrainer key={lesson.id} lesson={lesson} large={large} onComplete={onComplete} /> : <TypingStudio large={large} issuer="edu-typing" />}
+        {duel ? <DuelDemo /> : id ? <TypingTrainer key={lesson.id} lesson={lesson} large={large} onComplete={onComplete} /> : <TypingStudio large={large} issuer="edu-typing" />}
         {last && (
           <details className="demo-report">
             <summary>Що отримає застосунок (onComplete)</summary>

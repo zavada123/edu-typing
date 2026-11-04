@@ -37,6 +37,10 @@ export const SHEETS = {
   "explosion": { src: art("explosion.png"), frame: [192, 192], columns: 9, anchor: [96, 149], clips: {"play": {"frames": [0, 1, 2, 3, 4, 5, 6, 7, 8], "fps": 12}} },
   "fire": { src: art("fire.png"), frame: [128, 128], columns: 7, anchor: [64, 114], clips: {"play": {"frames": [0, 1, 2, 3, 4, 5, 6], "fps": 10}} },
   "ground": { src: art("ground.png"), frame: [64, 64], columns: 10, anchor: [32, 64], clips: {} },
+  "archer-red": { src: art("archer-red.png"), frame: [192, 192], columns: 8, anchor: [100, 134], clips: {"idle": {"frames": [0, 1, 2, 3, 4, 5], "fps": 10}, "shoot": {"frames": [32, 33, 34, 35, 36, 37, 38, 39], "fps": 10}} },
+  "warrior-red": { src: art("warrior-red.png"), frame: [192, 192], columns: 6, anchor: [102, 136], clips: {"idle": {"frames": [0, 1, 2, 3, 4, 5], "fps": 10}, "run": {"frames": [6, 7, 8, 9, 10, 11], "fps": 10}, "attack": {"frames": [12, 13, 14, 15, 16, 17], "fps": 10}} },
+  "castle-red": { src: art("castle-red.png"), frame: [320, 256], columns: 1, anchor: [160, 250], clips: {} },
+  "tower-red": { src: art("tower-red.png"), frame: [128, 256], columns: 1, anchor: [64, 235], clips: {} },
 } as const satisfies Readonly<Record<string, Sheet>>
 
 export type SheetName = keyof typeof SHEETS
