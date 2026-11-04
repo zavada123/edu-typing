@@ -64,6 +64,10 @@ export interface ShellProps {
   readonly stats?: ReactNode
   /** Replaces the game-over line. */
   readonly verdict?: ReactNode
+  /** Focus the field when play starts without the start button (a duel starts by itself). */
+  readonly autoFocus?: boolean
+  /** Label of the button on the game-over screen. */
+  readonly againLabel?: string
   readonly onBlur: () => void
   readonly fieldClass: string
 }
@@ -73,6 +77,9 @@ const LIVES_ICON = "❤"
 /** Frame shared by both games: score line, field, start / pause / game over overlay, key input. */
 export const GameShell = (p: ShellProps) => {
   const boxRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (p.autoFocus && p.phase === "play") boxRef.current?.focus({ preventScroll: true })
+  }, [p.autoFocus, p.phase])
   const onKeyDown = (e: KeyboardEvent) => {
     if ((e.key === "Escape" || e.key === "Backspace") && p.onCancel) {
       e.preventDefault()
@@ -122,7 +129,7 @@ export const GameShell = (p: ShellProps) => {
             {p.phase === "start" && <p className="edu-game-rules">{p.rules}</p>}
             {p.phase !== "pause" && p.options}
             <button type="button" className="edu-btn" onClick={start}>
-              {p.phase === "pause" ? "Продовжити" : p.phase === "over" ? "Грати ще" : "Почати гру"}
+              {p.phase === "pause" ? "Продовжити" : p.phase === "over" ? (p.againLabel ?? "Грати ще") : "Почати гру"}
             </button>
             {p.best > 0 && <p className="edu-course-note">Рекорд: {p.best}</p>}
           </div>

@@ -18,14 +18,14 @@ export const FIELD = { width: 1024, height: 448 } as const
 const CELL = 64
 
 /** Road x (0…100) to canvas x. */
-const roadX = (x: number): number => 150 + x * 8.5
-const LANE_Y = 336
+export const roadX = (x: number): number => 150 + x * 8.5
+export const LANE_Y = 336
 const ROAD_ROWS = [4, 5] as const
 
 const images = new Map<string, HTMLImageElement>()
 
 /** The picture, or null while it loads; `onLoad` asks for one more frame when it arrives. */
-const image = (src: string, onLoad: () => void): HTMLImageElement | null => {
+export const image = (src: string, onLoad: () => void): HTMLImageElement | null => {
   const known = images.get(src)
   if (known) return known.complete && known.naturalWidth > 0 ? known : null
   const img = new Image()
@@ -46,9 +46,9 @@ interface SpriteOptions {
   readonly frameIndex?: number
 }
 
-type Painter = (ctx: CanvasRenderingContext2D, name: SheetName, x: number, y: number, o?: SpriteOptions) => void
+export type Painter = (ctx: CanvasRenderingContext2D, name: SheetName, x: number, y: number, o?: SpriteOptions) => void
 
-const painter =
+export const painter =
   (onLoad: () => void): Painter =>
   (ctx, name, x, y, o = {}) => {
     const sheet = SHEETS[name]
@@ -76,7 +76,7 @@ const drawTile = (ctx: CanvasRenderingContext2D, col: number, row: number, x: nu
 }
 
 /** Grass everywhere and a sandy road from the castle to the goblin camp. */
-const drawGround = (ctx: CanvasRenderingContext2D, onLoad: () => void) => {
+export const drawGround = (ctx: CanvasRenderingContext2D, onLoad: () => void) => {
   ctx.fillStyle = "#6bb35d"
   ctx.fillRect(0, 0, FIELD.width, FIELD.height)
   for (let y = 0; y < FIELD.height / CELL; y++) for (let x = 0; x < FIELD.width / CELL; x++) drawTile(ctx, 1, 1, x * CELL, y * CELL, onLoad)
@@ -100,9 +100,9 @@ const LABEL_AT: Readonly<Record<CommandKind, readonly [number, number]>> = {
   repair: [roadX(TOWER_X) + 40, 150]
 }
 
-const COST_ICONS = { gold: "🪙", wood: "🪵" } as const
+export const COST_ICONS = { gold: "🪙", wood: "🪵" } as const
 
-const costText = (kind: CommandKind): string => {
+export const costText = (kind: CommandKind): string => {
   const { gold, wood } = COMMANDS[kind].cost
   return [gold > 0 ? `${gold}${COST_ICONS.gold}` : "", wood > 0 ? `${wood}${COST_ICONS.wood}` : ""].filter(Boolean).join(" ")
 }
@@ -112,19 +112,25 @@ const roundRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.roundRect(x, y, w, h, r)
 }
 
+export interface WordLabel {
+  readonly cx: number
+  readonly cy: number
+  readonly word: string
+  readonly typed: number
+  readonly active: boolean
+  readonly blocked: boolean
+  readonly caption: string
+}
+
 /** The word of an order: typed letters green, the rest dark; faded when the order cannot be given now. */
-const drawLabel = (ctx: CanvasRenderingContext2D, s: KingdomState, kind: CommandKind, word: string) => {
-  const [cx, cy] = LABEL_AT[kind]
-  const active = s.target === kind
-  const typed = active ? s.typed : 0
-  const blocked = !active && blockedReason(s, kind) !== undefined
+export const drawWordLabel = (ctx: CanvasRenderingContext2D, l: WordLabel) => {
+  const { cx, cy, word, typed, active, blocked, caption } = l
   ctx.save()
   ctx.font = "700 26px system-ui, sans-serif"
   const done = word.slice(0, typed)
   const rest = word.slice(typed)
   const wordWidth = ctx.measureText(word).width
   ctx.font = "500 13px system-ui, sans-serif"
-  const caption = [COMMANDS[kind].title, costText(kind)].filter(Boolean).join(" · ")
   const width = Math.max(wordWidth, ctx.measureText(caption).width) + 24
   const height = 52
   ctx.globalAlpha = blocked ? 0.55 : 1
@@ -147,11 +153,27 @@ const drawLabel = (ctx: CanvasRenderingContext2D, s: KingdomState, kind: Command
   ctx.restore()
 }
 
+export const orderCaption = (kind: CommandKind): string => [COMMANDS[kind].title, costText(kind)].filter(Boolean).join(" · ")
+
+const drawLabel = (ctx: CanvasRenderingContext2D, s: KingdomState, kind: CommandKind, word: string) => {
+  const [cx, cy] = LABEL_AT[kind]
+  const active = s.target === kind
+  drawWordLabel(ctx, {
+    cx,
+    cy,
+    word,
+    typed: active ? s.typed : 0,
+    active,
+    blocked: !active && blockedReason(s, kind) !== undefined,
+    caption: orderCaption(kind)
+  })
+}
+
 const tickMs = (s: KingdomState) => s.tick * TICK_MS
 const age = (s: KingdomState, e: Effect) => (s.tick - e.born) * TICK_MS
 
 /** A little spread across the road so a crowd does not stand in one spot. */
-const laneOffset = (id: number): number => ((id % 3) - 1) * 16
+export const laneOffset = (id: number): number => ((id % 3) - 1) * 16
 
 const drawUnit = (ctx: CanvasRenderingContext2D, paint: Painter, s: KingdomState, u: KingdomUnit) => {
   const t = tickMs(s) + u.id * 70
