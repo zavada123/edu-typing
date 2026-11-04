@@ -23,13 +23,13 @@ import {
 } from "../core/index.ts"
 import { Keyboard } from "./Keyboard.tsx"
 
-export type GameId = "letterfall" | "balloons"
+export type GameId = "letterfall" | "balloons" | "kingdom"
 
 /** Longest frame step: after a background tab the game must not jump forward. */
 const MAX_FRAME_MS = 100
 
 /** Calls `tick(dt)` on every animation frame while `running`. */
-const useFrames = (running: boolean, tick: (dtMs: number) => void) => {
+export const useFrames = (running: boolean, tick: (dtMs: number) => void) => {
   const tickRef = useRef(tick)
   tickRef.current = tick
   useEffect(() => {
@@ -44,7 +44,7 @@ const useFrames = (running: boolean, tick: (dtMs: number) => void) => {
   }, [running])
 }
 
-interface ShellProps {
+export interface ShellProps {
   readonly title: string
   readonly rules: string
   readonly phase: "start" | "play" | "pause" | "over"
@@ -58,6 +58,12 @@ interface ShellProps {
   readonly below: ReactNode
   readonly onStart: () => void
   readonly onKey: (char: string) => void
+  /** Escape or Backspace: drop what is being typed. */
+  readonly onCancel?: () => void
+  /** Replaces the points, level and lives line. */
+  readonly stats?: ReactNode
+  /** Replaces the game-over line. */
+  readonly verdict?: ReactNode
   readonly onBlur: () => void
   readonly fieldClass: string
 }
@@ -65,9 +71,14 @@ interface ShellProps {
 const LIVES_ICON = "❤"
 
 /** Frame shared by both games: score line, field, start / pause / game over overlay, key input. */
-const GameShell = (p: ShellProps) => {
+export const GameShell = (p: ShellProps) => {
   const boxRef = useRef<HTMLDivElement>(null)
   const onKeyDown = (e: KeyboardEvent) => {
+    if ((e.key === "Escape" || e.key === "Backspace") && p.onCancel) {
+      e.preventDefault()
+      if (p.phase === "play") p.onCancel()
+      return
+    }
     if (e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return
     e.preventDefault()
     if (p.phase === "play") p.onKey(e.key)
@@ -90,14 +101,19 @@ const GameShell = (p: ShellProps) => {
       <header className="edu-typing-head">
         <strong>{p.title}</strong>
         <span className="edu-typing-stats">
-          Очки {p.points} · рівень {p.level} · <span className="edu-game-lives">{LIVES_ICON.repeat(p.lives)}</span>
+          {p.stats ?? (
+            <>
+              Очки {p.points} · рівень {p.level} · <span className="edu-game-lives">{LIVES_ICON.repeat(p.lives)}</span>
+            </>
+          )}
         </span>
       </header>
       <div className={`edu-game-field ${p.fieldClass}`}>
         {p.field}
         {p.phase !== "play" && (
           <div className="edu-game-overlay">
-            {p.phase === "over" && (
+            {p.phase === "over" && p.verdict}
+            {p.phase === "over" && !p.verdict && (
               <p className="edu-typing-verdict">
                 Гру закінчено: {p.points} очок{p.points > 0 && p.points >= p.best ? " — новий рекорд!" : ""}
               </p>
@@ -120,7 +136,7 @@ const GameShell = (p: ShellProps) => {
   )
 }
 
-const LAYOUT_GENITIVE: Readonly<Record<LayoutId, string>> = { uk: "українську", en: "англійську" }
+export const LAYOUT_GENITIVE: Readonly<Record<LayoutId, string>> = { uk: "українську", en: "англійську" }
 
 /** Letter sets for Letterfall: rows of the keyboard or the letters the student learned. */
 const letterRows = (layout: LayoutId): ReadonlyArray<{ readonly id: string; readonly label: string; readonly chars: string[] }> => {
@@ -134,7 +150,7 @@ const letterRows = (layout: LayoutId): ReadonlyArray<{ readonly id: string; read
   ]
 }
 
-interface GameProps {
+export interface GameProps {
   readonly layout: LayoutId
   readonly progress: Progress
   readonly onProgress: (change: (p: Progress) => Progress) => void
@@ -142,7 +158,7 @@ interface GameProps {
   readonly learned: ReadonlySet<string>
 }
 
-type Phase = ShellProps["phase"]
+export type Phase = ShellProps["phase"]
 
 const MIN_LEARNED = 4
 

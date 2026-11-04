@@ -2,6 +2,7 @@ import { useState } from "react"
 import { type Certificate, learnedKeys, type LayoutId } from "../core/index.ts"
 import { CourseView } from "./CourseView.tsx"
 import { BalloonsGame, type GameId, LetterfallGame } from "./games.tsx"
+import { KingdomGame } from "./kingdom/KingdomGame.tsx"
 import { TypingTest } from "./TypingTest.tsx"
 import type { Report } from "./TypingTrainer.tsx"
 import { DEFAULT_STORAGE_KEY, useProgress } from "./useProgress.ts"
@@ -32,7 +33,8 @@ const LAYOUT_LABELS: Readonly<Record<LayoutId, string>> = { uk: "Українс�
 
 const GAMES: ReadonlyArray<{ readonly id: GameId; readonly title: string; readonly about: string }> = [
   { id: "letterfall", title: "Літеропад", about: "Лови літери, що падають з неба" },
-  { id: "balloons", title: "Повітряні кульки", about: "Набирай слова й лопай кульки" }
+  { id: "balloons", title: "Повітряні кульки", about: "Набирай слова й лопай кульки" },
+  { id: "kingdom", title: "Клавішне королівство", about: "Командуй замком і бережи його до світанку" }
 ]
 
 /** The whole trainer: lessons with progress, typing games, and the speed test with a certificate. */
@@ -85,11 +87,9 @@ export const TypingStudio = ({
               </button>
             ))}
           </span>
-          {game === "letterfall" ? (
-            <LetterfallGame key={layout} layout={layout} progress={progress} onProgress={update} learned={learned} />
-          ) : (
-            <BalloonsGame key={layout} layout={layout} progress={progress} onProgress={update} learned={learned} />
-          )}
+          {game === "letterfall" && <LetterfallGame key={layout} layout={layout} progress={progress} onProgress={update} learned={learned} />}
+          {game === "balloons" && <BalloonsGame key={layout} layout={layout} progress={progress} onProgress={update} learned={learned} />}
+          {game === "kingdom" && <KingdomGame key={layout} layout={layout} progress={progress} onProgress={update} learned={learned} />}
         </div>
       )}
 
