@@ -8,6 +8,7 @@ import {
   type KingdomState,
   type KingdomUnit,
   nightProgress,
+  SIEGE_X,
   TICK_MS,
   TOWER_X
 } from "../../core/kingdom.ts"
@@ -169,6 +170,33 @@ const drawLabel = (ctx: CanvasRenderingContext2D, s: KingdomState, kind: Command
   })
 }
 
+/** Hit points over a castle or the goblin camp: a bar with the number in it. */
+export const drawHpBar = (ctx: CanvasRenderingContext2D, cx: number, y: number, hp: number, max: number, color: string) => {
+  const w = 96
+  const h = 14
+  const x = Math.min(FIELD.width - w - 6, Math.max(6, cx - w / 2))
+  const share = Math.max(0, Math.min(1, hp / max))
+  ctx.save()
+  ctx.fillStyle = "rgb(15 23 42 / 0.65)"
+  ctx.beginPath()
+  ctx.roundRect(x - 2, y - 2, w + 4, h + 4, 5)
+  ctx.fill()
+  ctx.fillStyle = color
+  ctx.beginPath()
+  ctx.roundRect(x, y, w * share, h, 4)
+  ctx.fill()
+  ctx.font = "700 11px system-ui, sans-serif"
+  ctx.fillStyle = "#ffffff"
+  const text = `${Math.ceil(hp)}/${max}`
+  ctx.fillText(text, x + w / 2 - ctx.measureText(text).width / 2, y + 11)
+  ctx.restore()
+}
+
+const CAMP_CX = roadX(98)
+const OWN_BAR = "#3b82f6"
+const ENEMY_BAR = "#ef4444"
+export const HP_BAR_COLORS = { own: OWN_BAR, enemy: ENEMY_BAR } as const
+
 const tickMs = (s: KingdomState) => s.tick * TICK_MS
 const age = (s: KingdomState, e: Effect) => (s.tick - e.born) * TICK_MS
 
@@ -232,7 +260,12 @@ const drawEffect = (ctx: CanvasRenderingContext2D, paint: Painter, s: KingdomSta
 const drawScenery = (ctx: CanvasRenderingContext2D, paint: Painter, s: KingdomState) => {
   const t = tickMs(s)
   const recent = (kind: Effect["kind"]) => s.effects.some((e) => e.kind === kind && age(s, e) < 600)
-  paint(ctx, "goblin-house", roadX(98), 300, { scale: 0.8 })
+  paint(ctx, "goblin-house", CAMP_CX, 300, { scale: 0.8, alpha: s.campHp <= 0 ? 0.35 : 1 })
+  // Warriors at the camp break it: smoke and fire over the house.
+  const sieged = s.units.some((u) => u.kind === "warrior" && u.fighting && u.x >= SIEGE_X)
+  if (s.campHp > 0 && (sieged || s.campHp < s.options.campHp * 0.3)) {
+    paint(ctx, "fire", CAMP_CX - 20, 250, { clip: "play", timeMs: t, scale: 0.55 })
+  }
   paint(ctx, recent("gold") ? "gold-mine-active" : "gold-mine", 520, 190, { scale: 0.75 })
   paint(ctx, "pawn", 430, 205, { clip: recent("gold") ? "build" : "idle", timeMs: t, scale: 0.75 })
   for (const [i, x] of [740, 810, 870].entries()) paint(ctx, "tree", x, 200 - (i % 2) * 18, { clip: "idle", timeMs: t + i * 200, scale: 0.6 })
@@ -243,6 +276,11 @@ const drawScenery = (ctx: CanvasRenderingContext2D, paint: Painter, s: KingdomSt
   const castleHurt = s.castleHp < CASTLE_MAX_HP * 0.3
   paint(ctx, s.castleHp <= 0 ? "castle-destroyed" : "castle-blue", 140, 300, { scale: 0.72 })
   if (castleHurt && s.castleHp > 0) paint(ctx, "fire", 95, 230, { clip: "play", timeMs: t, scale: 0.6 })
+}
+
+const drawHpBars = (ctx: CanvasRenderingContext2D, s: KingdomState) => {
+  drawHpBar(ctx, 140, 150, s.castleHp, CASTLE_MAX_HP, OWN_BAR)
+  drawHpBar(ctx, CAMP_CX, 205, s.campHp, s.options.campHp, ENEMY_BAR)
 }
 
 const drawShield = (ctx: CanvasRenderingContext2D, s: KingdomState) => {
@@ -283,5 +321,6 @@ export const drawKingdom = (ctx: CanvasRenderingContext2D, s: KingdomState, onLo
   for (const e of s.effects) drawEffect(ctx, paint, s, e)
   drawShield(ctx, s)
   drawNight(ctx, s)
+  drawHpBars(ctx, s)
   for (const slot of s.slots) drawLabel(ctx, s, slot.kind, slot.word)
 }

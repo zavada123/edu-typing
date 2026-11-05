@@ -1,4 +1,5 @@
 import {
+  DUEL_CASTLE_HP,
   type DuelEffect,
   type DuelPlayer,
   type DuelSide,
@@ -7,7 +8,7 @@ import {
   duelBlocked
 } from "../../core/duel.ts"
 import { type CommandKind, TICK_MS } from "../../core/kingdom.ts"
-import { drawGround, drawWordLabel, LANE_Y, laneOffset, orderCaption, type Painter, painter, roadX } from "./draw.ts"
+import { drawGround, drawHpBar, drawWordLabel, HP_BAR_COLORS, LANE_Y, laneOffset, orderCaption, type Painter, painter, roadX } from "./draw.ts"
 
 /**
  * The duel field as one player sees it: their castle on the left (blue), the other castle on the right (red),
@@ -148,5 +149,7 @@ export const drawDuel = (ctx: CanvasRenderingContext2D, s: DuelState, me: DuelSi
   drawUnits(ctx, v, other(me), s.players[other(me)])
   drawUnits(ctx, v, me, s.players[me])
   for (const e of s.effects) drawEffect(ctx, v, e)
+  drawHpBar(ctx, 140, 150, s.players[me].castleHp, DUEL_CASTLE_HP, HP_BAR_COLORS.own)
+  drawHpBar(ctx, 1024 - 120, 150, s.players[other(me)].castleHp, DUEL_CASTLE_HP, HP_BAR_COLORS.enemy)
   drawLabels(ctx, v)
 }

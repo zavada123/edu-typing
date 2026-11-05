@@ -31,7 +31,7 @@ const LEVELS: ReadonlyArray<{ readonly id: LevelId; readonly label: string }> = 
 const MIN_POOL = 40
 
 const RULES =
-  "Ти юний чарівник, і до світанку треба вберегти замок від гоблінів. Над копальнею, лісом і замком висять слова: надрукуй слово, і наказ виконається. Золото й дрова наймають мечників і лучників, будують вежу і ставлять чарівний щит. Помилка не скасовує наказ, але сповільнює його. Esc скидає слово."
+  "Ти юний чарівник, і до світанку треба вберегти замок від гоблінів. Мечники, яким нема з ким битися, йдуть ламати табір гоблінів: зруйнуєш його — переможеш ще до світанку. Над копальнею, лісом і замком висять слова: надрукуй слово, і наказ виконається. Золото й дрова наймають мечників і лучників, будують вежу і ставлять чарівний щит. Помилка не скасовує наказ, але сповільнює його. Esc скидає слово."
 
 const formatTime = (s: number): string => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`
 
@@ -93,12 +93,12 @@ export const KingdomGame = ({ layout, progress, onProgress, learned }: GameProps
       fieldClass="edu-kingdom"
       stats={
         <>
-          🪙 {state.gold} · 🪵 {state.wood} · Замок {Math.ceil(state.castleHp)}/{CASTLE_MAX_HP} · До світанку {formatTime(leftS)}
+          🪙 {state.gold} · 🪵 {state.wood} · Замок {Math.ceil(state.castleHp)}/{CASTLE_MAX_HP} · Табір гоблінів {Math.ceil(state.campHp)}/{state.options.campHp} · До світанку {formatTime(leftS)}
         </>
       }
       verdict={
         <p className="edu-typing-verdict">
-          {result.won ? "Світанок! Замок вистояв." : "Гобліни захопили замок."} {"★".repeat(result.stars)}
+          {result.campBroken ? "Табір гоблінів зруйновано! Перемога." : result.won ? "Світанок! Замок вистояв." : "Гобліни захопили замок."} {"★".repeat(result.stars)}
           <br />
           <small>
             {result.points} очок · прогнано гоблінів: {result.repelled} · {result.cpm} зн/хв · точність {result.accuracy}%

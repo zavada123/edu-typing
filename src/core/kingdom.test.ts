@@ -10,6 +10,7 @@ import {
   MISTAKE_DELAY_MS,
   newKingdom,
   pressKingdom,
+  SIEGE_X,
   TICK_MS,
   tickKingdom
 } from "./kingdom.ts"
@@ -141,6 +142,28 @@ describe("kingdom night", () => {
     const over = tickKingdom(s)
     expect(over.over).toBe("won")
     expect(kingdomResult(over).stars).toBe(3)
+  })
+
+  test("warriors with no goblin near break the goblin camp and win before dawn", () => {
+    const camp = KINGDOM_LEVELS.normal.campHp
+    const warrior = (id: number) => ({ id, kind: "warrior" as const, x: SIEGE_X, hp: 8, cooldownS: 0, fighting: false })
+    const s: KingdomState = { ...start(), nextGoblinTick: 1_000_000, units: [warrior(90), warrior(91)] }
+    const later = ticks(s, 1000 / TICK_MS)
+    expect(later.campHp).toBeCloseTo(camp - 2, 5)
+    expect(later.units.every((u) => u.fighting)).toBe(true)
+    const over = tickKingdom({ ...s, campHp: 0.01 })
+    expect(over.over).toBe("won")
+    expect(kingdomResult(over).campBroken).toBe(true)
+  })
+
+  test("a warrior fights a goblin near the camp instead of breaking the camp", () => {
+    const s: KingdomState = {
+      ...start(),
+      nextGoblinTick: 1_000_000,
+      units: [{ id: 90, kind: "warrior", x: SIEGE_X, hp: 8, cooldownS: 0, fighting: false }],
+      goblins: [{ id: 99, kind: "tnt", x: SIEGE_X + 2, hp: 50, fighting: false }]
+    }
+    expect(ticks(s, 20).campHp).toBe(KINGDOM_LEVELS.normal.campHp)
   })
 
   test("the same seed and keys replay the same game", () => {
