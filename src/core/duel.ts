@@ -26,12 +26,14 @@ export interface DuelInput {
 export const DUEL_CANCEL = "cancel"
 export const DUEL_SECONDS = 180
 export const DUEL_CASTLE_HP = 30
+/** Full hit points of a warrior, for the bar over it. */
+export const DUEL_WARRIOR_HP = 8
 
 const TICK_S = TICK_MS / 1000
 const CASTLE_FRONT = 12
 const WALL = 9
 const TOWER = 22
-const WARRIOR = { hp: 8, dps: 2, speed: 7, reach: 4 } as const
+const WARRIOR = { hp: DUEL_WARRIOR_HP, dps: 2, speed: 7, reach: 4 } as const
 const ARCHER = { range: 45, cooldownS: 1.4, damage: 1 } as const
 const TOWER_SHOT = { range: 40, cooldownS: 1, damage: 1 } as const
 const MAX_WARRIORS = 6

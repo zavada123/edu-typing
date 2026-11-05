@@ -158,6 +158,9 @@ export interface KingdomState {
 }
 
 export const CASTLE_MAX_HP = CASTLE_HP
+/** Full hit points of a warrior and of each goblin, for the bars over them. */
+export const WARRIOR_MAX_HP = WARRIOR.hp
+export const goblinMaxHp = (kind: GoblinKind): number => GOBLINS[kind].hp
 /** Points for breaking the goblin camp. */
 const CAMP_BONUS = 100
 const EFFECT_TICKS = 20

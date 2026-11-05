@@ -5,12 +5,14 @@ import {
   COMMANDS,
   type Effect,
   type Goblin,
+  goblinMaxHp,
   type KingdomState,
   type KingdomUnit,
   nightProgress,
   SIEGE_X,
   TICK_MS,
-  TOWER_X
+  TOWER_X,
+  WARRIOR_MAX_HP
 } from "../../core/kingdom.ts"
 import { type SheetName, SHEETS } from "./sheets.ts"
 
@@ -192,6 +194,21 @@ export const drawHpBar = (ctx: CanvasRenderingContext2D, cx: number, y: number, 
   ctx.restore()
 }
 
+/** A small bar over a fighter: how much of its strength is left. */
+export const drawUnitBar = (ctx: CanvasRenderingContext2D, cx: number, y: number, hp: number, max: number, color: string) => {
+  const w = 34
+  const share = Math.max(0, Math.min(1, hp / max))
+  ctx.save()
+  ctx.fillStyle = "rgb(15 23 42 / 0.6)"
+  ctx.fillRect(cx - w / 2 - 1, y - 1, w + 2, 6)
+  ctx.fillStyle = color
+  ctx.fillRect(cx - w / 2, y, w * share, 4)
+  ctx.restore()
+}
+
+/** Height of a unit bar over the feet of a fighter on the road. */
+export const UNIT_BAR_DY = 62
+
 const CAMP_CX = roadX(98)
 const OWN_BAR = "#3b82f6"
 const ENEMY_BAR = "#ef4444"
@@ -211,13 +228,17 @@ const drawUnit = (ctx: CanvasRenderingContext2D, paint: Painter, s: KingdomState
     paint(ctx, "archer", 70 + place * 55, 198, { clip: u.cooldownS > 1 ? "shoot" : "idle", timeMs: t, scale: 0.55 })
     return
   }
-  paint(ctx, "warrior", roadX(u.x), LANE_Y + laneOffset(u.id), { clip: u.fighting ? "attack" : "run", timeMs: t, scale: 0.6 })
+  const y = LANE_Y + laneOffset(u.id)
+  paint(ctx, "warrior", roadX(u.x), y, { clip: u.fighting ? "attack" : "run", timeMs: t, scale: 0.6 })
+  drawUnitBar(ctx, roadX(u.x), y - UNIT_BAR_DY, u.hp, WARRIOR_MAX_HP, OWN_BAR)
 }
 
 const drawGoblin = (ctx: CanvasRenderingContext2D, paint: Painter, s: KingdomState, g: Goblin) => {
   const name = g.kind === "tnt" ? "goblin-tnt" : "goblin-torch"
   const clip = g.fighting ? (g.kind === "tnt" ? "throw" : "attack") : "run"
-  paint(ctx, name, roadX(g.x), LANE_Y + laneOffset(g.id), { clip, timeMs: tickMs(s) + g.id * 90, scale: 0.6, mirror: true })
+  const y = LANE_Y + laneOffset(g.id)
+  paint(ctx, name, roadX(g.x), y, { clip, timeMs: tickMs(s) + g.id * 90, scale: 0.6, mirror: true })
+  drawUnitBar(ctx, roadX(g.x), y - UNIT_BAR_DY, g.hp, goblinMaxHp(g.kind), ENEMY_BAR)
 }
 
 const drawEffect = (ctx: CanvasRenderingContext2D, paint: Painter, s: KingdomState, e: Effect) => {

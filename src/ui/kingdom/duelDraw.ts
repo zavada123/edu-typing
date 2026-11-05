@@ -1,5 +1,6 @@
 import {
   DUEL_CASTLE_HP,
+  DUEL_WARRIOR_HP,
   type DuelEffect,
   type DuelPlayer,
   type DuelSide,
@@ -8,7 +9,7 @@ import {
   duelBlocked
 } from "../../core/duel.ts"
 import { type CommandKind, TICK_MS } from "../../core/kingdom.ts"
-import { drawGround, drawHpBar, drawWordLabel, HP_BAR_COLORS, LANE_Y, laneOffset, orderCaption, type Painter, painter, roadX } from "./draw.ts"
+import { drawGround, drawHpBar, drawUnitBar, UNIT_BAR_DY, drawWordLabel, HP_BAR_COLORS, LANE_Y, laneOffset, orderCaption, type Painter, painter, roadX } from "./draw.ts"
 
 /**
  * The duel field as one player sees it: their castle on the left (blue), the other castle on the right (red),
@@ -88,7 +89,9 @@ const drawUnit = (ctx: CanvasRenderingContext2D, v: View, own: boolean, u: DuelU
   }
   // Distance from its own castle, seen from this player's side of the road.
   const x = roadX(own ? u.d : 100 - u.d)
-  v.paint(ctx, own ? "warrior" : "warrior-red", x, LANE_Y + laneOffset(u.id), { clip: u.fighting ? "attack" : "run", timeMs: t, scale: 0.6, mirror: !own })
+  const y = LANE_Y + laneOffset(u.id)
+  v.paint(ctx, own ? "warrior" : "warrior-red", x, y, { clip: u.fighting ? "attack" : "run", timeMs: t, scale: 0.6, mirror: !own })
+  drawUnitBar(ctx, x, y - UNIT_BAR_DY, u.hp, DUEL_WARRIOR_HP, own ? HP_BAR_COLORS.own : HP_BAR_COLORS.enemy)
 }
 
 const drawEffect = (ctx: CanvasRenderingContext2D, v: View, e: DuelEffect) => {
