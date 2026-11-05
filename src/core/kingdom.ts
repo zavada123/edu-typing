@@ -22,7 +22,8 @@ const CAMP_X = ROAD_END - 4
 /** Warriors with no goblin near stand here and break the goblin camp. */
 export const SIEGE_X = CAMP_X - 6
 
-export type CommandKind = "gold" | "wood" | "warrior" | "archer" | "tower" | "repair" | "shield"
+/** `forge` and `ranger` are orders of the duel only. */
+export type CommandKind = "gold" | "wood" | "warrior" | "archer" | "tower" | "repair" | "shield" | "forge" | "ranger"
 
 export interface Cost {
   readonly gold: number
@@ -43,7 +44,10 @@ export const COMMANDS: Readonly<Record<CommandKind, CommandInfo>> = {
   archer: { title: "Найняти лучника", cost: { gold: 4, wood: 2 }, length: [4, 6] },
   tower: { title: "Збудувати вежу", cost: { gold: 0, wood: 8 }, length: [5, 8] },
   repair: { title: "Полагодити замок", cost: { gold: 0, wood: 3 }, length: [4, 7] },
-  shield: { title: "Чарівний щит", cost: { gold: 6, wood: 4 }, length: [6, 12] }
+  shield: { title: "Чарівний щит", cost: { gold: 6, wood: 4 }, length: [6, 12] },
+  // The duel asks more for each next level of the forge: see `duelCost`. This is the first level.
+  forge: { title: "Кузня: сильніші воїни", cost: { gold: 10, wood: 6 }, length: [6, 10] },
+  ranger: { title: "Лучник у поле", cost: { gold: 6, wood: 2 }, length: [4, 6] }
 }
 
 const GOLD_PER_WORD = 2
@@ -158,6 +162,9 @@ export interface KingdomState {
 }
 
 export const CASTLE_MAX_HP = CASTLE_HP
+/** Full hit points of a warrior and of each goblin, for the bars over them. */
+export const WARRIOR_MAX_HP = WARRIOR.hp
+export const goblinMaxHp = (kind: GoblinKind): number => GOBLINS[kind].hp
 /** Points for breaking the goblin camp. */
 const CAMP_BONUS = 100
 const EFFECT_TICKS = 20
@@ -272,7 +279,29 @@ const carryOut = (s: KingdomState, kind: CommandKind): KingdomState => {
       return addEffect({ ...s, castleHp: Math.min(CASTLE_HP, s.castleHp + REPAIR_HP) }, "repaired", 0)
     case "shield":
       return addEffect({ ...s, shieldUntil: s.tick + secondsToTicks(SHIELD_S) }, "shield", 0)
+    case "forge":
+    case "ranger":
+      // Orders of the duel: the night against goblins never offers them.
+      return s
   }
+}
+
+/**
+ * Letters that many keyboards lack or hide: «ґ» is missing on a lot of Ukrainian keyboards. Game words never have
+ * them, so no order waits for a key the player cannot press.
+ */
+export const RARE_LETTERS: readonly string[] = ["ґ"]
+
+/** The word has no letter that a keyboard may lack. */
+export const easyToType = (word: string): boolean => !RARE_LETTERS.some((l) => word.includes(l))
+
+/** Another word for an order, by mouse: for a word the player cannot or does not want to type. */
+export const skipKingdomWord = (s: KingdomState, kind: CommandKind): KingdomState => {
+  if (s.over || !s.slots.some((o) => o.kind === kind)) return s
+  const others = s.slots.filter((o) => o.kind !== kind)
+  const [word, seed] = pickWord(s.pool.filter((w) => w !== s.slots.find((o) => o.kind === kind)?.word), kind, others, s.seed)
+  const dropped = s.target === kind ? { target: undefined, typed: 0, targetMistakes: 0 } : {}
+  return { ...s, ...dropped, seed, slots: s.slots.map((o) => (o.kind === kind ? { ...o, word } : o)) }
 }
 
 /** A new word for the finished order; the tower order turns into repairs once the tower stands. */

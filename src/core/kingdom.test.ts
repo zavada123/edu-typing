@@ -9,6 +9,8 @@ import {
   kingdomResult,
   MISTAKE_DELAY_MS,
   newKingdom,
+  skipKingdomWord,
+  easyToType,
   pressKingdom,
   SIEGE_X,
   TICK_MS,
@@ -189,5 +191,21 @@ describe("kingdom result", () => {
     const r = kingdomResult(minute)
     expect(r.cpm).toBe(word.length)
     expect(r.accuracy).toBe(Math.round((word.length / (word.length + 1)) * 100))
+  })
+})
+
+describe("another word by mouse", () => {
+  test("gives the order a new word that starts with a letter no other order has", () => {
+    const s = start()
+    const old = s.slots.find((o) => o.kind === "gold")?.word ?? ""
+    const next = skipKingdomWord(s, "gold")
+    const word = next.slots.find((o) => o.kind === "gold")?.word ?? ""
+    expect(word).not.toBe(old)
+    expect(next.slots.filter((o) => o.word[0] === word[0])).toHaveLength(1)
+  })
+
+  test("words with a letter that many keyboards lack are easy to leave out", () => {
+    expect(easyToType("ґанок")).toBe(false)
+    expect(easyToType("замок")).toBe(true)
   })
 })

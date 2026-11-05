@@ -5,10 +5,11 @@ import {
   type DuelSide,
   type DuelState,
   type DuelUnit,
-  duelBlocked
+  duelBlocked,
+  duelCost
 } from "../../core/duel.ts"
 import { type CommandKind, TICK_MS } from "../../core/kingdom.ts"
-import { drawGround, drawHpBar, drawWordLabel, HP_BAR_COLORS, LANE_Y, laneOffset, orderCaption, type Painter, painter, roadX } from "./draw.ts"
+import { type CanvasButton, drawGround, drawTowerArcher, drawHpBar, drawHud, type Hud, refreshButtons, underHud, drawUnitBar, UNIT_BAR_DY, drawWordLabel, HP_BAR_COLORS, LANE_Y, laneOffset, orderCaption, type Painter, painter, roadX } from "./draw.ts"
 
 /**
  * The duel field as one player sees it: their castle on the left (blue), the other castle on the right (red),
@@ -21,8 +22,10 @@ const OWN_LABEL_AT: Readonly<Record<CommandKind, readonly [number, number]>> = {
   warrior: [140, 418],
   gold: [500, 42],
   wood: [720, 42],
-  tower: [roadX(22) + 40, 150],
-  repair: [roadX(22) + 40, 150]
+  tower: [roadX(22) + 90, 205],
+  repair: [roadX(22) + 90, 205],
+  forge: [400, 418],
+  ranger: [660, 418]
 }
 
 const MINE_X = 500
@@ -45,7 +48,11 @@ const drawCastles = (ctx: CanvasRenderingContext2D, v: View) => {
   v.paint(ctx, mine.castleHp <= 0 ? "castle-destroyed" : "castle-blue", 140, 300, { scale: 0.72 })
   v.paint(ctx, theirs.castleHp <= 0 ? "castle-destroyed" : "castle-red", 1024 - 120, 300, { scale: 0.72 })
   v.paint(ctx, mine.towerBuilt ? "tower-blue" : "tower-construction", roadX(22), 250, { scale: 0.6 })
-  if (theirs.towerBuilt) v.paint(ctx, "tower-red", roadX(78), 250, { scale: 0.6 })
+  if (mine.towerBuilt) drawTowerArcher(v.paint, ctx, "archer", roadX(22), mine.towerCooldownS, v.ms, false)
+  if (theirs.towerBuilt) {
+    v.paint(ctx, "tower-red", roadX(78), 250, { scale: 0.6 })
+    drawTowerArcher(v.paint, ctx, "archer-red", roadX(78), theirs.towerCooldownS, v.ms, true)
+  }
   for (const [p, cx] of [[mine, 140], [theirs, 1024 - 120]] as const) {
     if (p.castleHp > 0 && p.castleHp < 10) v.paint(ctx, "fire", cx - 45, 230, { clip: "play", timeMs: v.ms, scale: 0.6 })
     if (p.shieldUntil > v.s.tick) {
@@ -69,7 +76,7 @@ const drawScenery = (ctx: CanvasRenderingContext2D, v: View) => {
   v.paint(ctx, "pawn", MINE_X - 90, 205, { clip: recent("gold") ? "build" : "idle", timeMs: v.ms, scale: 0.75 })
   for (const [i, x] of [TREES_X, TREES_X + 70].entries()) v.paint(ctx, "tree", x, 200 - i * 16, { clip: "idle", timeMs: v.ms + i * 200, scale: 0.6 })
   v.paint(ctx, "pawn", TREES_X - 60, 220, { clip: recent("wood") ? "chop" : "idle", timeMs: v.ms, scale: 0.75 })
-  v.paint(ctx, "sheep", 470, 428, { clip: "idle", timeMs: v.ms, scale: 0.5 })
+  v.paint(ctx, "sheep", 870, 428, { clip: "idle", timeMs: v.ms, scale: 0.5 })
 }
 
 const drawUnits = (ctx: CanvasRenderingContext2D, v: View, side: DuelSide, p: DuelPlayer) => {
@@ -88,7 +95,13 @@ const drawUnit = (ctx: CanvasRenderingContext2D, v: View, own: boolean, u: DuelU
   }
   // Distance from its own castle, seen from this player's side of the road.
   const x = roadX(own ? u.d : 100 - u.d)
-  v.paint(ctx, own ? "warrior" : "warrior-red", x, LANE_Y + laneOffset(u.id), { clip: u.fighting ? "attack" : "run", timeMs: t, scale: 0.6, mirror: !own })
+  const y = LANE_Y + laneOffset(u.id)
+  if (u.kind === "ranger") {
+    v.paint(ctx, own ? "archer" : "archer-red", x, y, { clip: u.fighting ? "shoot" : "run", timeMs: t, scale: 0.55, mirror: !own })
+  } else {
+    v.paint(ctx, own ? "warrior" : "warrior-red", x, y, { clip: u.fighting ? "attack" : "run", timeMs: t, scale: 0.6, mirror: !own })
+  }
+  drawUnitBar(ctx, x, y - UNIT_BAR_DY, u.hp, u.maxHp, own ? HP_BAR_COLORS.own : HP_BAR_COLORS.enemy)
 }
 
 const drawEffect = (ctx: CanvasRenderingContext2D, v: View, e: DuelEffect) => {
@@ -119,28 +132,41 @@ const drawEffect = (ctx: CanvasRenderingContext2D, v: View, e: DuelEffect) => {
     case "built":
       v.paint(ctx, "explosion", roadX(v.x(e.x)), 240, { clip: "play", timeMs: ms, scale: 0.6, alpha: fade })
       return
+    case "forged":
+      // Sparks over the castle whose warriors got new armour.
+      v.paint(ctx, "fire", e.side === v.me ? 140 : 1024 - 120, 170 - ms * 0.03, { clip: "play", timeMs: ms, scale: 0.45, alpha: fade })
+      return
   }
 }
 
 const drawLabels = (ctx: CanvasRenderingContext2D, v: View) => {
   const p = v.s.players[v.me]
-  for (const slot of p.slots) {
+  return p.slots.map((slot) => {
     const [cx, cy] = OWN_LABEL_AT[slot.kind]
     const active = p.target === slot.kind
-    drawWordLabel(ctx, {
+    return [slot.kind, drawWordLabel(ctx, {
       cx,
       cy,
       word: slot.word,
       typed: active ? p.typed : 0,
       active,
       blocked: !active && duelBlocked(v.s, v.me, slot.kind) !== undefined,
-      caption: orderCaption(slot.kind)
-    })
-  }
+      caption: orderCaption(slot.kind, duelCost(v.s, v.me, slot.kind))
+    })] as const
+  })
 }
 
-/** Draws the duel for player `me`. `onLoad` asks for another frame when a picture arrives. */
-export const drawDuel = (ctx: CanvasRenderingContext2D, s: DuelState, me: DuelSide, onLoad: () => void) => {
+/** Draws the bar and the duel for player `me`. `onLoad` asks for another frame when a picture arrives. */
+export const drawDuel = (ctx: CanvasRenderingContext2D, s: DuelState, me: DuelSide, hud: Hud, onLoad: () => void): ReadonlyArray<CanvasButton<CommandKind>> => {
+  drawHud(ctx, hud)
+  let at: ReadonlyArray<readonly [CommandKind, readonly [number, number]]> = []
+  underHud(ctx, () => {
+    at = drawDuelField(ctx, s, me, onLoad)
+  })
+  return refreshButtons(at)
+}
+
+const drawDuelField = (ctx: CanvasRenderingContext2D, s: DuelState, me: DuelSide, onLoad: () => void) => {
   const v: View = { s, me, x: (x) => (me === 0 ? x : 100 - x), paint: painter(onLoad), ms: s.tick * TICK_MS }
   ctx.imageSmoothingEnabled = false
   drawGround(ctx, onLoad)
@@ -151,5 +177,5 @@ export const drawDuel = (ctx: CanvasRenderingContext2D, s: DuelState, me: DuelSi
   for (const e of s.effects) drawEffect(ctx, v, e)
   drawHpBar(ctx, 140, 150, s.players[me].castleHp, DUEL_CASTLE_HP, HP_BAR_COLORS.own)
   drawHpBar(ctx, 1024 - 120, 150, s.players[other(me)].castleHp, DUEL_CASTLE_HP, HP_BAR_COLORS.enemy)
-  drawLabels(ctx, v)
+  return drawLabels(ctx, v)
 }

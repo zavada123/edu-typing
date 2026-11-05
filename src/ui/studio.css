@@ -568,7 +568,8 @@
 /* Клавішне королівство: a canvas field that keeps its shape. */
 .edu-kingdom {
   height: auto;
-  aspect-ratio: 1024 / 448;
+  /* The canvas: the 44-pixel bar with gold, wood and time over the 1024 × 448 field. */
+  aspect-ratio: 1024 / 492;
   background: #6bb35d;
 }
 
@@ -589,4 +590,50 @@
   color: #fff;
   background: rgb(15 23 42 / 0.8);
   border-radius: 999px;
+}
+
+.edu-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.edu-game-fullscreen {
+  padding: 2px 12px;
+  font: inherit;
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--edu-fg);
+  background: #fff;
+  border: 1px solid var(--edu-line);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.edu-game-fullscreen:hover {
+  border-color: var(--edu-accent);
+}
+
+/* The whole screen: the field as large as it fits, on a dark background. */
+.edu-game:fullscreen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  color: #f8fafc;
+  background: #0f172a;
+}
+
+.edu-game:fullscreen .edu-typing-stats,
+.edu-game:fullscreen .edu-typing-next {
+  color: #cbd5e1;
+}
+
+.edu-game:fullscreen .edu-kingdom {
+  width: min(100%, calc((100vh - 110px) * 1024 / 492));
+  margin: 0 auto;
 }

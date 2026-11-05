@@ -3,7 +3,10 @@ import {
   advanceDuel,
   applyDuelInput,
   DUEL_CANCEL,
+  duelSkipKey,
+  type CommandKind,
   DUEL_CASTLE_HP,
+  DUEL_FORGE_LEVELS,
   DUEL_TICKS,
   type DuelInput,
   type DuelKey,
@@ -18,7 +21,7 @@ import {
   WORDS
 } from "../../core/index.ts"
 import { GameShell, LAYOUT_GENITIVE } from "../games.tsx"
-import { FIELD } from "./draw.ts"
+import { buttonAt, CANVAS, type CanvasButton, canvasPoint, type Hud } from "./draw.ts"
 import { drawDuel } from "./duelDraw.ts"
 
 export interface DuelGameProps {
@@ -43,11 +46,13 @@ export interface DuelGameProps {
   readonly opponentLeft?: boolean
 }
 
-const RULES = "Два замки на одній дорозі, слова в обох однакові. Друкуй накази: золото й дрова наймають мечників, які йдуть ламати замок суперника."
+const RULES =
+  "Два замки на одній дорозі, слова в обох однакові. Друкуй накази: золото й дрова наймають мечників, які йдуть ламати замок суперника. Кузня робить твоїх воїнів сильнішими (до 3 рівнів) і відкриває лучників, що йдуть дорогою й стріляють здалеку."
 
 const formatTime = (s: number): string => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`
 
 const NOTICE_MS = 1500
+const FORGE_ICON = "⚒️"
 
 /**
  * «Клавішне королівство» against another person. The host page connects to the server and passes the confirmed
@@ -62,6 +67,7 @@ export const DuelGame = (p: DuelGameProps) => {
   const [, redraw] = useState(0)
   const [wrongLayout, setWrongLayout] = useState(false)
   const canvas = useRef<HTMLCanvasElement>(null)
+  const buttons = useRef<ReadonlyArray<CanvasButton<CommandKind>>>([])
   const reported = useRef(false)
 
   const fresh = p.inputs.slice(confirmed.current.used)
@@ -74,9 +80,16 @@ export const DuelGame = (p: DuelGameProps) => {
   const shown = pending.current.reduce((s, key) => applyDuelInput(s, { side: p.side, key }), base)
   const over = base.over !== undefined || p.opponentLeft === true
 
+  const me = shown.players[p.side]
+  const them = shown.players[p.side === 0 ? 1 : 0]
+  const myName = p.names[p.side]
+  const theirName = p.names[p.side === 0 ? 1 : 0]
+  const leftS = ((DUEL_TICKS - base.tick) * TICK_MS) / 1000
+  const hud: Hud = { gold: me.gold, wood: me.wood, more: [[FORGE_ICON, `${me.forge}/${DUEL_FORGE_LEVELS}`]], time: formatTime(leftS), timeCaption: "До кінця бою", right: `${myName} ⚔ ${theirName}` }
+
   useEffect(() => {
     const ctx = canvas.current?.getContext("2d")
-    if (ctx) drawDuel(ctx, shown, p.side, () => redraw((n) => n + 1))
+    if (ctx) buttons.current = drawDuel(ctx, shown, p.side, hud, () => redraw((n) => n + 1))
   })
 
   useEffect(() => {
@@ -100,12 +113,12 @@ export const DuelGame = (p: DuelGameProps) => {
     if (!wrong) send(lower)
   }
 
-  const me = shown.players[p.side]
-  const them = shown.players[p.side === 0 ? 1 : 0]
-  const myName = p.names[p.side]
-  const theirName = p.names[p.side === 0 ? 1 : 0]
   const result = duelResult(base, p.side)
-  const leftS = ((DUEL_TICKS - base.tick) * TICK_MS) / 1000
+  const hit = (e: { readonly clientX: number; readonly clientY: number }) => {
+    if (!canvas.current || over) return undefined
+    const [x, y] = canvasPoint(canvas.current, e.clientX, e.clientY)
+    return buttonAt(buttons.current, x, y)
+  }
   const notice = me.notice && (shown.tick - me.notice.tick) * TICK_MS < NOTICE_MS ? me.notice.text : undefined
   const won = result.won || (p.opponentLeft === true && base.over === undefined)
   return (
@@ -121,11 +134,8 @@ export const DuelGame = (p: DuelGameProps) => {
       againLabel="Вийти"
       wrongLayout={wrongLayout ? LAYOUT_GENITIVE[p.layout] : undefined}
       fieldClass="edu-kingdom"
-      stats={
-        <>
-          🪙 {me.gold} · 🪵 {me.wood} · Мій замок {Math.ceil(me.castleHp)}/{DUEL_CASTLE_HP} · {theirName}: {Math.ceil(them.castleHp)}/{DUEL_CASTLE_HP} · {formatTime(leftS)}
-        </>
-      }
+      fullscreen
+      stats={<span className="edu-visually-hidden">Мій замок {Math.ceil(me.castleHp)}/{DUEL_CASTLE_HP}, {theirName}: {Math.ceil(them.castleHp)}/{DUEL_CASTLE_HP}</span>}
       verdict={
         <p className="edu-typing-verdict">
           {p.opponentLeft && base.over === undefined ? "Суперник вийшов із бою. Перемога!" : won ? "Перемога! Замок суперника впав." : result.draw ? "Нічия." : "Поразка. Спробуй ще раз!"}
@@ -145,8 +155,13 @@ export const DuelGame = (p: DuelGameProps) => {
           <canvas
             ref={canvas}
             className="edu-kingdom-canvas"
-            width={FIELD.width}
-            height={FIELD.height}
+            onClick={(e) => {
+              const button = hit(e)
+              if (button) send(duelSkipKey(button.id))
+            }}
+            onMouseMove={(e) => e.currentTarget.style.setProperty("cursor", hit(e) ? "pointer" : "")}
+            width={CANVAS.width}
+            height={CANVAS.height}
             aria-label={`Бій. Мої накази: ${me.slots.map((o) => o.word).join(", ")}`}
             data-words={me.slots.map((o) => `${o.kind}:${o.word}`).join(" ")}
           />
