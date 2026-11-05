@@ -7,6 +7,7 @@ import {
   DUEL_FORGE_LEVELS,
   DUEL_WARRIOR_HP,
   duelSkipKey,
+  duelCost,
   DUEL_ORDERS,
   DUEL_TICKS,
   duelBlocked,
@@ -106,6 +107,8 @@ describe("duel battle", () => {
     expect(s.players[0].units[0]?.maxHp).toBe(DUEL_WARRIOR_HP + 2)
     s = type(s, 0, wordOf(s, 0, "warrior"))
     expect(s.players[0].units[1]?.hp).toBe(DUEL_WARRIOR_HP + 2)
+    const first = duelCost(s, 0, "forge")
+    expect(first.gold).toBeGreaterThan(10)
     for (let i = 1; i < DUEL_FORGE_LEVELS; i++) s = type(s, 0, wordOf(s, 0, "forge"))
     expect(duelBlocked(s, 0, "forge")).toBe("Кузня вже найкраща")
   })

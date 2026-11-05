@@ -3,6 +3,7 @@ import {
   CASTLE_MAX_HP,
   type CommandKind,
   COMMANDS,
+  type Cost,
   type Effect,
   type Goblin,
   goblinMaxHp,
@@ -180,8 +181,8 @@ const LABEL_AT: Readonly<Record<CommandKind, readonly [number, number]>> = {
 
 export const COST_ICONS = { gold: "🪙", wood: "🪵" } as const
 
-export const costText = (kind: CommandKind): string => {
-  const { gold, wood } = COMMANDS[kind].cost
+export const costText = (kind: CommandKind, cost: Cost = COMMANDS[kind].cost): string => {
+  const { gold, wood } = cost
   return [gold > 0 ? `${gold}${COST_ICONS.gold}` : "", wood > 0 ? `${wood}${COST_ICONS.wood}` : ""].filter(Boolean).join(" ")
 }
 
@@ -278,7 +279,8 @@ export const drawWordLabel = (ctx: CanvasRenderingContext2D, l: WordLabel): read
 export const refreshButtons = <K>(at: ReadonlyArray<readonly [K, readonly [number, number]]>): ReadonlyArray<CanvasButton<K>> =>
   at.map(([id, [x, y]]) => ({ id, x, y: y + HUD_HEIGHT, r: REFRESH_R }))
 
-export const orderCaption = (kind: CommandKind): string => [COMMANDS[kind].title, costText(kind)].filter(Boolean).join(" · ")
+export const orderCaption = (kind: CommandKind, cost: Cost = COMMANDS[kind].cost): string =>
+  [COMMANDS[kind].title, costText(kind, cost)].filter(Boolean).join(" · ")
 
 const drawLabel = (ctx: CanvasRenderingContext2D, s: KingdomState, kind: CommandKind, word: string): readonly [number, number] => {
   const [cx, cy] = LABEL_AT[kind]

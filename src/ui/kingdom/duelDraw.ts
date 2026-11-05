@@ -5,7 +5,8 @@ import {
   type DuelSide,
   type DuelState,
   type DuelUnit,
-  duelBlocked
+  duelBlocked,
+  duelCost
 } from "../../core/duel.ts"
 import { type CommandKind, TICK_MS } from "../../core/kingdom.ts"
 import { type CanvasButton, drawGround, drawTowerArcher, drawHpBar, drawHud, type Hud, refreshButtons, underHud, drawUnitBar, UNIT_BAR_DY, drawWordLabel, HP_BAR_COLORS, LANE_Y, laneOffset, orderCaption, type Painter, painter, roadX } from "./draw.ts"
@@ -150,7 +151,7 @@ const drawLabels = (ctx: CanvasRenderingContext2D, v: View) => {
       typed: active ? p.typed : 0,
       active,
       blocked: !active && duelBlocked(v.s, v.me, slot.kind) !== undefined,
-      caption: orderCaption(slot.kind)
+      caption: orderCaption(slot.kind, duelCost(v.s, v.me, slot.kind))
     })] as const
   })
 }

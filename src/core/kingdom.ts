@@ -45,8 +45,9 @@ export const COMMANDS: Readonly<Record<CommandKind, CommandInfo>> = {
   tower: { title: "Збудувати вежу", cost: { gold: 0, wood: 8 }, length: [5, 8] },
   repair: { title: "Полагодити замок", cost: { gold: 0, wood: 3 }, length: [4, 7] },
   shield: { title: "Чарівний щит", cost: { gold: 6, wood: 4 }, length: [6, 12] },
-  forge: { title: "Кузня: сильніші воїни", cost: { gold: 6, wood: 4 }, length: [5, 8] },
-  ranger: { title: "Лучник у поле", cost: { gold: 4, wood: 3 }, length: [4, 6] }
+  // The duel asks more for each next level of the forge: see `duelCost`. This is the first level.
+  forge: { title: "Кузня: сильніші воїни", cost: { gold: 10, wood: 6 }, length: [6, 10] },
+  ranger: { title: "Лучник у поле", cost: { gold: 6, wood: 2 }, length: [4, 6] }
 }
 
 const GOLD_PER_WORD = 2

@@ -1,4 +1,4 @@
-import { COMMANDS, type CommandKind, easyToType, MISTAKE_DELAY_MS, ROAD_END, TICK_MS } from "./kingdom.ts"
+import { COMMANDS, type CommandKind, type Cost, easyToType, MISTAKE_DELAY_MS, ROAD_END, TICK_MS } from "./kingdom.ts"
 
 /**
  * Duel of «Клавішне королівство»: two players, two castles at the ends of one road. Both type the same words in
@@ -37,6 +37,12 @@ export const DUEL_WARRIOR_HP = 8
 /** Levels of the forge; each one gives every fighter on the road more hit points and a harder blow. */
 export const DUEL_FORGE_LEVELS = 3
 const FORGE = { hp: 2, dps: 0.5 } as const
+/** Price of each level of the forge: the first costs two warriors, every next one more. */
+const FORGE_COSTS: readonly Cost[] = [
+  { gold: 10, wood: 6 },
+  { gold: 14, wood: 10 },
+  { gold: 18, wood: 14 }
+]
 
 const TICK_S = TICK_MS / 1000
 const CASTLE_FRONT = 12
@@ -223,10 +229,14 @@ const effect = (s: DuelState, side: DuelSide, kind: DuelEffectKind, x: number, t
   effects: [...s.effects, { id: s.nextId, side, kind, x, born: s.tick, ...(toX === undefined ? {} : { toX }) }]
 })
 
+/** What the order costs `side` now: the forge asks more for each next level. */
+export const duelCost = (s: DuelState, side: DuelSide, kind: CommandKind): Cost =>
+  kind === "forge" ? (FORGE_COSTS[s.players[side].forge] ?? FORGE_COSTS[FORGE_COSTS.length - 1] ?? COMMANDS.forge.cost) : COMMANDS[kind].cost
+
 /** Why `side` cannot give the order now, or undefined when it can. */
 export const duelBlocked = (s: DuelState, side: DuelSide, kind: CommandKind): string | undefined => {
   const p = s.players[side]
-  const cost = COMMANDS[kind].cost
+  const cost = duelCost(s, side, kind)
   if (p.gold < cost.gold) return "Бракує золота"
   if (p.wood < cost.wood) return "Бракує дров"
   const units = (k: DuelUnit["kind"]) => p.units.filter((u) => u.kind === k).length
@@ -277,7 +287,7 @@ const finishWord = (s: DuelState, side: DuelSide): DuelState => {
   const reason = duelBlocked(s, side, slot.kind)
   const reset = { ...p, target: undefined, typed: 0, targetMistakes: 0 }
   if (reason) return setPlayer(s, side, notice(reset, s.tick, reason))
-  const cost = COMMANDS[slot.kind].cost
+  const cost = duelCost(s, side, slot.kind)
   const delay = Math.ceil((p.targetMistakes * MISTAKE_DELAY_MS) / TICK_MS)
   const nextKind: CommandKind = slot.kind === "tower" ? "repair" : slot.kind
   // Repairs take the tower's words and letters, so the lists stay the same for both players.
