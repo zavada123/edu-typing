@@ -4,6 +4,9 @@ import {
   applyDuelInput,
   DUEL_CANCEL,
   DUEL_CASTLE_HP,
+  DUEL_FORGE_LEVELS,
+  DUEL_WARRIOR_HP,
+  duelSkipKey,
   DUEL_ORDERS,
   DUEL_TICKS,
   duelBlocked,
@@ -64,6 +67,27 @@ describe("duel orders", () => {
     expect(applyDuelInput(s, { side: 0, key: DUEL_CANCEL }).players[0].target).toBeUndefined()
   })
 
+  test("a click gives another word for one order, the same next word in both browsers", () => {
+    const s0 = start()
+    const word = wordOf(s0, 0, "gold")
+    const s = applyDuelInput(s0, { side: 0, key: duelSkipKey("gold") })
+    expect(wordOf(s, 0, "gold")).not.toBe(word)
+    expect(wordOf(applyDuelInput(s0, { side: 1, key: duelSkipKey("gold") }), 1, "gold")).toBe(wordOf(s, 0, "gold"))
+    expect(wordOf(s, 1, "gold")).toBe(word)
+    expect(s.players[0].mistakes).toBe(0)
+  })
+
+  test("another word drops the word being typed", () => {
+    const s0 = start()
+    const s = applyDuelInput(s0, { side: 0, key: wordOf(s0, 0, "wood")[0] ?? "" })
+    expect(applyDuelInput(s, { side: 0, key: duelSkipKey("wood") }).players[0].target).toBeUndefined()
+  })
+
+  test("no word has a letter that many keyboards lack", () => {
+    const words = Object.values(duelWords(POOL, 5)).flat()
+    expect(words.some((w) => w.includes("ґ"))).toBe(false)
+  })
+
   test("orders cost gold and wood", () => {
     const s = start()
     expect(duelBlocked(s, 0, "warrior")).toBe("Бракує золота")
@@ -73,6 +97,50 @@ describe("duel orders", () => {
 
 describe("duel battle", () => {
   const rich = (s: DuelState): DuelState => ({ ...s, players: [{ ...s.players[0], gold: 99, wood: 99 }, { ...s.players[1], gold: 99, wood: 99 }] })
+
+  test("the forge makes warriors stronger, also those already on the road, up to its last level", () => {
+    let s = rich(start())
+    s = type(s, 0, wordOf(s, 0, "warrior"))
+    s = type(s, 0, wordOf(s, 0, "forge"))
+    expect(s.players[0].forge).toBe(1)
+    expect(s.players[0].units[0]?.maxHp).toBe(DUEL_WARRIOR_HP + 2)
+    s = type(s, 0, wordOf(s, 0, "warrior"))
+    expect(s.players[0].units[1]?.hp).toBe(DUEL_WARRIOR_HP + 2)
+    for (let i = 1; i < DUEL_FORGE_LEVELS; i++) s = type(s, 0, wordOf(s, 0, "forge"))
+    expect(duelBlocked(s, 0, "forge")).toBe("Кузня вже найкраща")
+  })
+
+  test("a forged warrior beats a plain one", () => {
+    let s = rich(start())
+    s = type(s, 0, wordOf(s, 0, "forge"))
+    s = type(s, 0, wordOf(s, 0, "warrior"))
+    s = type(s, 1, wordOf(s, 1, "warrior"))
+    s = ticks(s, 200)
+    expect(s.players[0].units.filter((u) => u.kind === "warrior")).toHaveLength(1)
+    expect(s.players[1].units.filter((u) => u.kind === "warrior")).toHaveLength(0)
+  })
+
+  test("the forge opens archers that march and shoot the castle from afar", () => {
+    let s = rich(start())
+    expect(duelBlocked(s, 0, "ranger")).toBe("Спершу збудуй кузню")
+    s = type(s, 0, wordOf(s, 0, "forge"))
+    s = type(s, 0, wordOf(s, 0, "ranger"))
+    const ranger = s.players[0].units.find((u) => u.kind === "ranger")
+    expect(ranger).toBeDefined()
+    s = ticks(s, 400)
+    expect(s.players[1].castleHp).toBeLessThan(DUEL_CASTLE_HP)
+    const far = s.players[0].units.find((u) => u.kind === "ranger")
+    expect(far?.d).toBeLessThan(100 - 12)
+  })
+
+  test("archers on the road are targets for the other side", () => {
+    let s = rich(start())
+    s = type(s, 0, wordOf(s, 0, "forge"))
+    s = type(s, 0, wordOf(s, 0, "ranger"))
+    s = type(s, 1, wordOf(s, 1, "warrior"))
+    s = ticks(s, 400)
+    expect(s.players[0].units.some((u) => u.kind === "ranger")).toBe(false)
+  })
 
   test("a warrior marches to the other castle and breaks it", () => {
     let s = rich(start())

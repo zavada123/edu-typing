@@ -13,11 +13,14 @@ import {
   pressKingdom,
   TICK_MS,
   recordGame,
+  easyToType,
+  type CommandKind,
+  skipKingdomWord,
   WORDS,
   wordsWithin
 } from "../../core/index.ts"
 import { type GameProps, GameShell, LAYOUT_GENITIVE, type Phase, useFrames } from "../games.tsx"
-import { drawKingdom, FIELD } from "./draw.ts"
+import { buttonAt, CANVAS, type CanvasButton, canvasPoint, drawKingdom, type Hud } from "./draw.ts"
 
 type LevelId = keyof typeof KINGDOM_LEVELS
 
@@ -39,8 +42,8 @@ const NOTICE_MS = 1500
 
 /** «Клавішне королівство»: hold the castle until dawn by typing orders. */
 export const KingdomGame = ({ layout, progress, onProgress, learned }: GameProps) => {
-  const all = WORDS[layout].filter((w) => w === w.toLowerCase() && w.length > 1)
-  const mine = wordsWithin(layout, learned).filter((w) => w === w.toLowerCase() && w.length > 1)
+  const all = WORDS[layout].filter((w) => w === w.toLowerCase() && w.length > 1 && easyToType(w))
+  const mine = wordsWithin(layout, learned).filter((w) => w === w.toLowerCase() && w.length > 1 && easyToType(w))
   const pool = mine.length >= MIN_POOL ? mine : all
   const [level, setLevel] = useState<LevelId>("easy")
   const [state, setState] = useState<KingdomState>(() => newKingdom(pool, KINGDOM_LEVELS.easy, 1))
@@ -48,6 +51,7 @@ export const KingdomGame = ({ layout, progress, onProgress, learned }: GameProps
   const [wrongLayout, setWrongLayout] = useState(false)
   const carry = useRef(0)
   const canvas = useRef<HTMLCanvasElement>(null)
+  const buttons = useRef<ReadonlyArray<CanvasButton<CommandKind>>>([])
   const [, redraw] = useState(0)
   const best = progress.games.kingdom ?? 0
 
@@ -59,9 +63,13 @@ export const KingdomGame = ({ layout, progress, onProgress, learned }: GameProps
     })
   )
 
+  const result = kingdomResult(state)
+  const leftS = KINGDOM_LEVELS[level].durationS * (1 - nightProgress(state))
+  const hud: Hud = { gold: state.gold, wood: state.wood, more: [], time: formatTime(leftS), timeCaption: "До світанку", right: `Очки ${result.points}` }
+
   useEffect(() => {
     const ctx = canvas.current?.getContext("2d")
-    if (ctx) drawKingdom(ctx, state, () => redraw((n) => n + 1))
+    if (ctx) buttons.current = drawKingdom(ctx, state, hud, () => redraw((n) => n + 1))
   })
 
   useEffect(() => {
@@ -77,8 +85,11 @@ export const KingdomGame = ({ layout, progress, onProgress, learned }: GameProps
     if (!wrong) setState((s) => pressKingdom(s, lower))
   }
 
-  const result = kingdomResult(state)
-  const leftS = KINGDOM_LEVELS[level].durationS * (1 - nightProgress(state))
+  const hit = (e: { readonly clientX: number; readonly clientY: number }) => {
+    if (!canvas.current || phase !== "play") return undefined
+    const [x, y] = canvasPoint(canvas.current, e.clientX, e.clientY)
+    return buttonAt(buttons.current, x, y)
+  }
   const notice = state.notice && (state.tick - state.notice.tick) * TICK_MS < NOTICE_MS ? state.notice.text : undefined
   return (
     <GameShell
@@ -91,11 +102,8 @@ export const KingdomGame = ({ layout, progress, onProgress, learned }: GameProps
       best={best}
       wrongLayout={wrongLayout ? LAYOUT_GENITIVE[layout] : undefined}
       fieldClass="edu-kingdom"
-      stats={
-        <>
-          🪙 {state.gold} · 🪵 {state.wood} · Замок {Math.ceil(state.castleHp)}/{CASTLE_MAX_HP} · Табір гоблінів {Math.ceil(state.campHp)}/{state.options.campHp} · До світанку {formatTime(leftS)}
-        </>
-      }
+      fullscreen
+      stats={<span className="edu-visually-hidden">Замок {Math.ceil(state.castleHp)}/{CASTLE_MAX_HP}, табір гоблінів {Math.ceil(state.campHp)}/{state.options.campHp}</span>}
       verdict={
         <p className="edu-typing-verdict">
           {result.campBroken ? "Табір гоблінів зруйновано! Перемога." : result.won ? "Світанок! Замок вистояв." : "Гобліни захопили замок."} {"★".repeat(result.stars)}
@@ -127,7 +135,12 @@ export const KingdomGame = ({ layout, progress, onProgress, learned }: GameProps
       }
       field={
         <>
-          <canvas ref={canvas} className="edu-kingdom-canvas" width={FIELD.width} height={FIELD.height} aria-label={`Замок і дорога. Накази: ${state.slots.map((o) => `${o.word} (${COMMANDS[o.kind].title.toLowerCase()})`).join(", ")}`}
+          <canvas ref={canvas} className="edu-kingdom-canvas"
+            onClick={(e) => {
+              const button = hit(e)
+              if (button) setState((st) => skipKingdomWord(st, button.id))
+            }}
+            onMouseMove={(e) => e.currentTarget.style.setProperty("cursor", hit(e) ? "pointer" : "")} width={CANVAS.width} height={CANVAS.height} aria-label={`Замок і дорога. Накази: ${state.slots.map((o) => `${o.word} (${COMMANDS[o.kind].title.toLowerCase()})`).join(", ")}`}
             data-words={state.slots.map((o) => `${o.kind}:${o.word}`).join(" ")} />
           {notice && phase === "play" && <span className="edu-kingdom-notice">{notice}</span>}
         </>

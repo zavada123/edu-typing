@@ -1,9 +1,9 @@
-import { COMMANDS, type CommandKind, MISTAKE_DELAY_MS, ROAD_END, TICK_MS } from "./kingdom.ts"
+import { COMMANDS, type CommandKind, easyToType, MISTAKE_DELAY_MS, ROAD_END, TICK_MS } from "./kingdom.ts"
 
 /**
  * Duel of «Клавішне королівство»: two players, two castles at the ends of one road. Both type the same words in
  * the same order; gold and wood hire warriors that march on the other castle, archers and a tower on the walls
- * shoot the warriors that come. The first to break the other castle wins; at the end of time, the stronger castle.
+ * shoot the warriors that come. The forge makes warriors stronger and opens archers that march with them. The first to break the other castle wins; at the end of time, the stronger castle.
  *
  * Built for a network game in lockstep: the state changes only through `applyDuelInput` and `tickDuel`, both pure.
  * A server stamps every key with a tick and sends all keys to both players; each browser applies them at that
@@ -24,10 +24,19 @@ export interface DuelInput {
 }
 
 export const DUEL_CANCEL = "cancel"
+/** The key that gives order `kind` its next word, by mouse: `skip` and the place of the order in DUEL_ORDERS. */
+export const duelSkipKey = (kind: CommandKind): DuelKey => `skip${Math.max(0, DUEL_ORDERS.indexOf(kind === "repair" ? "tower" : kind))}`
+const skipKind = (key: DuelKey): CommandKind | undefined => {
+  const m = /^skip(\d)$/.exec(key)
+  return m ? DUEL_ORDERS[Number(m[1])] : undefined
+}
 export const DUEL_SECONDS = 180
 export const DUEL_CASTLE_HP = 30
-/** Full hit points of a warrior, for the bar over it. */
+/** Full hit points of a warrior without the forge, for the bar over it. */
 export const DUEL_WARRIOR_HP = 8
+/** Levels of the forge; each one gives every fighter on the road more hit points and a harder blow. */
+export const DUEL_FORGE_LEVELS = 3
+const FORGE = { hp: 2, dps: 0.5 } as const
 
 const TICK_S = TICK_MS / 1000
 const CASTLE_FRONT = 12
@@ -35,9 +44,12 @@ const WALL = 9
 const TOWER = 22
 const WARRIOR = { hp: DUEL_WARRIOR_HP, dps: 2, speed: 7, reach: 4 } as const
 const ARCHER = { range: 45, cooldownS: 1.4, damage: 1 } as const
+/** An archer on the road: weaker than a warrior, shoots from afar, also at the castle. */
+const RANGER = { hp: 5, speed: 7, range: 22, cooldownS: 1.2, damage: 1 } as const
 const TOWER_SHOT = { range: 40, cooldownS: 1, damage: 1 } as const
 const MAX_WARRIORS = 6
 const MAX_ARCHERS = 3
+const MAX_RANGERS = 3
 const GOLD_PER_WORD = 2
 const WOOD_PER_WORD = 2
 const REPAIR_HP = 5
@@ -46,7 +58,7 @@ const SIEGE_DPS = 1
 const EFFECT_TICKS = 20
 
 /** Orders in a duel: no goblins, so the tower and the shield guard against the other player. */
-export const DUEL_ORDERS: readonly CommandKind[] = ["gold", "wood", "warrior", "archer", "tower", "shield"]
+export const DUEL_ORDERS: readonly CommandKind[] = ["gold", "wood", "warrior", "archer", "tower", "shield", "forge", "ranger"]
 
 const ticksOf = (s: number): number => Math.round((s * 1000) / TICK_MS)
 export const DUEL_TICKS = ticksOf(DUEL_SECONDS)
@@ -54,12 +66,19 @@ export const DUEL_TICKS = ticksOf(DUEL_SECONDS)
 /** Road x of a point `d` steps from the castle of `side`. */
 export const roadOf = (side: DuelSide, d: number): number => (side === 0 ? d : ROAD_END - d)
 
+export type DuelUnitKind = "warrior" | "archer" | "ranger"
+
+/** Fighters that walk the road; archers stay on the walls. */
+const onRoad = (u: { readonly kind: DuelUnitKind }): boolean => u.kind !== "archer"
+
 export interface DuelUnit {
   readonly id: number
-  readonly kind: "warrior" | "archer"
+  readonly kind: DuelUnitKind
   /** Distance from its own castle. */
   readonly d: number
   readonly hp: number
+  /** Full hit points, for the bar: the forge raises them. */
+  readonly maxHp: number
   readonly cooldownS: number
   readonly fighting: boolean
 }
@@ -78,6 +97,8 @@ export interface DuelPlayer {
   readonly shieldUntil: number
   readonly towerBuilt: boolean
   readonly towerCooldownS: number
+  /** Level of the forge, 0 before it is built. */
+  readonly forge: number
   readonly slots: readonly DuelSlot[]
   readonly target: CommandKind | undefined
   readonly typed: number
@@ -90,7 +111,7 @@ export interface DuelPlayer {
   readonly notice: { readonly text: string; readonly tick: number } | undefined
 }
 
-export type DuelEffectKind = "arrow" | "fallen" | "gold" | "wood" | "built" | "siege"
+export type DuelEffectKind = "arrow" | "fallen" | "gold" | "wood" | "built" | "siege" | "forged"
 
 export interface DuelEffect {
   readonly id: number
@@ -130,7 +151,7 @@ const WORDS_PER_ORDER = 400
  * order can have its own fixed list: both players then get the same words in the same order, however they play.
  */
 export const duelWords = (pool: readonly string[], seed: number): Readonly<Record<string, readonly string[]>> => {
-  const clean = [...new Set(pool.filter((w) => w.length > 1 && w === w.toLowerCase()))]
+  const clean = [...new Set(pool.filter((w) => w.length > 1 && w === w.toLowerCase() && easyToType(w)))]
   const letters = [...new Set(clean.map((w) => w[0] ?? ""))].sort()
   // Short orders get the letters with the most short words: they come up most often.
   const byShort = [...letters].sort((a, b) => count(clean, b, 2, 4) - count(clean, a, 2, 4) || a.localeCompare(b))
@@ -171,6 +192,7 @@ const newPlayer = (words: DuelState["words"]): DuelPlayer => ({
   shieldUntil: 0,
   towerBuilt: false,
   towerCooldownS: 0,
+  forge: 0,
   slots: DUEL_ORDERS.map((kind) => ({ kind, word: wordAt(words, kind, 0), count: 1 })),
   target: undefined,
   typed: 0,
@@ -210,6 +232,9 @@ export const duelBlocked = (s: DuelState, side: DuelSide, kind: CommandKind): st
   const units = (k: DuelUnit["kind"]) => p.units.filter((u) => u.kind === k).length
   if (kind === "warrior" && units("warrior") >= MAX_WARRIORS) return "Усі мечники вже в полі"
   if (kind === "archer" && units("archer") >= MAX_ARCHERS) return "На стінах немає місця"
+  if (kind === "ranger" && p.forge === 0) return "Спершу збудуй кузню"
+  if (kind === "ranger" && units("ranger") >= MAX_RANGERS) return "Усі лучники вже в полі"
+  if (kind === "forge" && p.forge >= DUEL_FORGE_LEVELS) return "Кузня вже найкраща"
   if (kind === "repair" && p.castleHp >= DUEL_CASTLE_HP) return "Замок цілий"
   if (kind === "shield" && p.shieldUntil > s.tick) return "Щит уже стоїть"
   return undefined
@@ -223,9 +248,16 @@ const carryOut = (s: DuelState, side: DuelSide, kind: CommandKind): DuelState =>
     case "wood":
       return effect(setPlayer(s, side, { ...p, wood: p.wood + WOOD_PER_WORD }), side, "wood", roadOf(side, 40))
     case "warrior":
-    case "archer": {
-      const unit: DuelUnit = { id: s.nextId, kind, d: kind === "archer" ? WALL : CASTLE_FRONT - 2, hp: WARRIOR.hp, cooldownS: 0, fighting: false }
+    case "archer":
+    case "ranger": {
+      const hp = (kind === "ranger" ? RANGER.hp : WARRIOR.hp) + (kind === "archer" ? 0 : p.forge * FORGE.hp)
+      const unit: DuelUnit = { id: s.nextId, kind, d: kind === "archer" ? WALL : CASTLE_FRONT - 2, hp, maxHp: hp, cooldownS: 0, fighting: false }
       return { ...setPlayer(s, side, { ...p, units: [...p.units, unit] }), nextId: s.nextId + 1 }
+    }
+    case "forge": {
+      // Fighters already on the road get the new armour too.
+      const units = p.units.map((u) => (onRoad(u) ? { ...u, hp: u.hp + FORGE.hp, maxHp: u.maxHp + FORGE.hp } : u))
+      return effect(setPlayer(s, side, { ...p, forge: p.forge + 1, units }), side, "forged", roadOf(side, CASTLE_FRONT))
     }
     case "tower":
       return effect(setPlayer(s, side, { ...p, towerBuilt: true }), side, "built", roadOf(side, TOWER))
@@ -264,12 +296,24 @@ const finishWord = (s: DuelState, side: DuelSide): DuelState => {
   return delay > 0 ? next : carryOut(next, side, slot.kind)
 }
 
+/** The next word of the list for one order; the word being typed is dropped if it was that one. */
+const skipWord = (s: DuelState, side: DuelSide, list: CommandKind): DuelState => {
+  const p = s.players[side]
+  const slot = p.slots.find((o) => (o.kind === "repair" ? "tower" : o.kind) === list)
+  if (!slot) return s
+  const refreshed: DuelSlot = { ...slot, word: wordAt(s.words, list, slot.count), count: slot.count + 1 }
+  const dropped = p.target === slot.kind ? { target: undefined, typed: 0, targetMistakes: 0 } : {}
+  return setPlayer(s, side, { ...p, ...dropped, slots: p.slots.map((o) => (o === slot ? refreshed : o)) })
+}
+
 /** One key of one player, applied before the tick it is stamped with. */
 export const applyDuelInput = (s: DuelState, input: Pick<DuelInput, "side" | "key">): DuelState => {
   if (s.over !== undefined) return s
   const { side, key } = input
   const p = s.players[side]
   if (key === DUEL_CANCEL) return setPlayer(s, side, { ...p, target: undefined, typed: 0, targetMistakes: 0 })
+  const skipped = skipKind(key)
+  if (skipped !== undefined) return skipWord(s, side, skipped)
   const mistake = setPlayer(s, side, { ...p, mistakes: p.mistakes + 1, targetMistakes: p.target ? p.targetMistakes + 1 : 0 })
   if (p.target === undefined) {
     const slot = p.slots.find((o) => o.word[0] === key)
@@ -287,9 +331,9 @@ export const applyDuelInput = (s: DuelState, input: Pick<DuelInput, "side" | "ke
 
 const enemyOf = (side: DuelSide): DuelSide => (side === 0 ? 1 : 0)
 
-/** Warriors of `foe` as distances from the castle of `side`. */
+/** Fighters on the road of the other player, as distances from the castle of `side`. */
 const foesSeenFrom = (s: DuelState, side: DuelSide): ReadonlyArray<{ readonly id: number; readonly d: number; readonly hp: number }> =>
-  s.players[enemyOf(side)].units.filter((u) => u.kind === "warrior").map((u) => ({ id: u.id, d: ROAD_END - u.d, hp: u.hp }))
+  s.players[enemyOf(side)].units.filter(onRoad).map((u) => ({ id: u.id, d: ROAD_END - u.d, hp: u.hp }))
 
 const nearest = <T extends { readonly d: number }>(list: readonly T[], from: number, range: number): T | undefined =>
   list.filter((f) => f.d >= from - 1 && f.d - from <= range).sort((a, b) => a.d - b.d)[0]
@@ -321,9 +365,12 @@ const fight = (s: DuelState, side: DuelSide, hits: Hits, out: { state: DuelState
       out.state = effect(out.state, side, "arrow", roadOf(side, u.d), roadOf(side, foe.d))
       return { ...u, cooldownS: ARCHER.cooldownS }
     }
+    if (u.kind === "ranger") return shootFromRoad(u, foes, add, hits, (from, to) => {
+      out.state = effect(out.state, side, "arrow", roadOf(side, from), roadOf(side, to))
+    })
     const foe = nearest(foes, u.d, WARRIOR.reach)
     if (foe) {
-      add(foe.id, WARRIOR.dps * TICK_S)
+      add(foe.id, (WARRIOR.dps + p.forge * FORGE.dps) * TICK_S)
       return { ...u, fighting: true }
     }
     if (u.d >= ROAD_END - CASTLE_FRONT) {
@@ -343,6 +390,32 @@ const fight = (s: DuelState, side: DuelSide, hits: Hits, out: { state: DuelState
     }
   }
   return { ...p, units, towerCooldownS }
+}
+
+/** Where an archer on the road stops to shoot at the castle. */
+const RANGER_STOP = ROAD_END - CASTLE_FRONT - RANGER.range / 2
+
+/** An archer on the road: shoots the nearest foe in range, else the castle once close, else walks on. */
+const shootFromRoad = (
+  u: DuelUnit,
+  foes: ReturnType<typeof foesSeenFrom>,
+  add: (id: number, n: number) => void,
+  hits: Hits,
+  arrow: (from: number, to: number) => void
+): DuelUnit => {
+  const cooldownS = Math.max(0, u.cooldownS - TICK_S)
+  const foe = nearest(foes, u.d, RANGER.range)
+  const atCastle = u.d >= RANGER_STOP
+  if (!foe && !atCastle) return { ...u, cooldownS, fighting: false, d: Math.min(RANGER_STOP, u.d + RANGER.speed * TICK_S) }
+  if (cooldownS > 0) return { ...u, cooldownS, fighting: true }
+  if (foe) {
+    add(foe.id, RANGER.damage)
+    arrow(u.d, foe.d)
+  } else {
+    hits.castle += RANGER.damage
+    arrow(u.d, ROAD_END - CASTLE_FRONT / 2)
+  }
+  return { ...u, cooldownS: RANGER.cooldownS, fighting: true }
 }
 
 const battle = (s: DuelState): DuelState => {

@@ -70,6 +70,25 @@ export interface ShellProps {
   readonly againLabel?: string
   readonly onBlur: () => void
   readonly fieldClass: string
+  /** Show a button that puts the game on the whole screen. */
+  readonly fullscreen?: boolean
+}
+
+/** The game box is on the whole screen now; follows the browser, also when Esc leaves the full screen. */
+const useFullscreen = (box: { readonly current: HTMLDivElement | null }) => {
+  const [on, setOn] = useState(false)
+  useEffect(() => {
+    const sync = () => setOn(document.fullscreenElement !== null && document.fullscreenElement === box.current)
+    document.addEventListener("fullscreenchange", sync)
+    return () => document.removeEventListener("fullscreenchange", sync)
+  }, [box])
+  const toggle = () => {
+    if (on) void document.exitFullscreen().catch(() => undefined)
+    else void box.current?.requestFullscreen().catch(() => undefined)
+    box.current?.focus({ preventScroll: true })
+  }
+  const available = typeof document !== "undefined" && document.fullscreenEnabled === true
+  return { on, toggle, available }
 }
 
 const LIVES_ICON = "❤"
@@ -77,6 +96,7 @@ const LIVES_ICON = "❤"
 /** Frame shared by both games: score line, field, start / pause / game over overlay, key input. */
 export const GameShell = (p: ShellProps) => {
   const boxRef = useRef<HTMLDivElement>(null)
+  const full = useFullscreen(boxRef)
   useEffect(() => {
     if (p.autoFocus && p.phase === "play") boxRef.current?.focus({ preventScroll: true })
   }, [p.autoFocus, p.phase])
@@ -114,6 +134,11 @@ export const GameShell = (p: ShellProps) => {
             </>
           )}
         </span>
+        {p.fullscreen && full.available && (
+          <button type="button" className="edu-game-fullscreen" onClick={full.toggle} aria-pressed={full.on}>
+            {full.on ? "Вийти з повного екрана" : "На весь екран"}
+          </button>
+        )}
       </header>
       <div className={`edu-game-field ${p.fieldClass}`}>
         {p.field}

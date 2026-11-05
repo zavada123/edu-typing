@@ -15,7 +15,7 @@ const botKey = (s: DuelState, side: DuelSide): DuelKey | undefined => {
   const p = s.players[side]
   if (p.target) return p.slots.find((o) => o.kind === p.target)?.word[p.typed]
   const can = (k: string) => p.slots.some((o) => o.kind === k) && duelBlocked(s, side, k as never) === undefined
-  const kind = can("warrior") ? "warrior" : can("tower") ? "tower" : p.gold < 5 ? "gold" : "wood"
+  const kind = can("forge") && p.forge === 0 ? "forge" : can("ranger") ? "ranger" : can("warrior") ? "warrior" : can("tower") ? "tower" : p.gold < 6 ? "gold" : "wood"
   return p.slots.find((o) => o.kind === kind)?.word[0]
 }
 
