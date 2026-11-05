@@ -19,6 +19,8 @@ export const CASTLE_FRONT = 12
 const ARCHER_X = 9
 export const TOWER_X = 22
 const CAMP_X = ROAD_END - 4
+/** Warriors with no goblin near stand here and break the goblin camp. */
+export const SIEGE_X = CAMP_X - 6
 
 export type CommandKind = "gold" | "wood" | "warrior" | "archer" | "tower" | "repair" | "shield"
 
@@ -54,7 +56,7 @@ const MAX_WARRIORS = 5
 const MAX_ARCHERS = 3
 
 const CASTLE_HP = 20
-const WARRIOR = { hp: 8, dps: 2, speed: 7, reach: 4 } as const
+const WARRIOR = { hp: 8, dps: 2, speed: 7, reach: 4, siegeDps: 1 } as const
 const ARCHER = { range: 45, cooldownS: 1.4, damage: 1 } as const
 const TOWER = { range: 40, cooldownS: 1, damage: 1 } as const
 
@@ -70,12 +72,14 @@ export interface KingdomOptions {
   /** Seconds between goblins at the start and at the end of the night. */
   readonly spawnS: readonly [number, number]
   readonly firstGoblinS: number
+  /** Hit points of the goblin camp: warriors that break it win before dawn. */
+  readonly campHp: number
 }
 
 export const KINGDOM_LEVELS = {
-  easy: { durationS: 120, spawnS: [11, 5], firstGoblinS: 15 },
-  normal: { durationS: 150, spawnS: [7, 1.6], firstGoblinS: 10 },
-  hard: { durationS: 180, spawnS: [4, 0.6], firstGoblinS: 8 }
+  easy: { durationS: 120, spawnS: [11, 5], firstGoblinS: 15, campHp: 60 },
+  normal: { durationS: 150, spawnS: [7, 1.6], firstGoblinS: 10, campHp: 100 },
+  hard: { durationS: 180, spawnS: [4, 0.6], firstGoblinS: 8, campHp: 160 }
 } as const satisfies Readonly<Record<string, KingdomOptions>>
 
 export interface Slot {
@@ -134,6 +138,7 @@ export interface KingdomState {
   readonly gold: number
   readonly wood: number
   readonly castleHp: number
+  readonly campHp: number
   readonly shieldUntil: number
   readonly towerBuilt: boolean
   readonly towerCooldownS: number
@@ -153,6 +158,8 @@ export interface KingdomState {
 }
 
 export const CASTLE_MAX_HP = CASTLE_HP
+/** Points for breaking the goblin camp. */
+const CAMP_BONUS = 100
 const EFFECT_TICKS = 20
 
 // ── Seeded random, kept in the state so the game can be saved and replayed. ──
@@ -203,6 +210,7 @@ export const newKingdom = (pool: readonly string[], options: KingdomOptions, see
     gold: 3,
     wood: 0,
     castleHp: CASTLE_HP,
+    campHp: options.campHp,
     shieldUntil: 0,
     towerBuilt: false,
     towerCooldownS: 0,
@@ -375,7 +383,10 @@ const shoot = (s: KingdomState): KingdomState => {
   return { ...out, goblins: out.goblins.map((g) => ({ ...g, hp: g.hp - (damage.get(g.id) ?? 0) })) }
 }
 
-/** Warriors walk to the goblins and fight them; goblins fight warriors in their way or hit the castle. */
+/**
+ * Warriors walk to the goblins and fight them; with no goblin near they break the goblin camp. Goblins fight
+ * warriors in their way or hit the castle.
+ */
 const melee = (s: KingdomState): KingdomState => {
   const warriors = s.units.filter((u) => u.kind === "warrior")
   const goblinDamage = new Map<number, number>()
@@ -386,8 +397,11 @@ const melee = (s: KingdomState): KingdomState => {
       goblinDamage.set(foe.id, (goblinDamage.get(foe.id) ?? 0) + WARRIOR.dps * TICK_S)
       return { ...w, fighting: true }
     }
-    return { ...w, fighting: false, x: Math.min(CAMP_X - 6, w.x + WARRIOR.speed * TICK_S) }
+    const x = Math.min(SIEGE_X, w.x + WARRIOR.speed * TICK_S)
+    return { ...w, fighting: x >= SIEGE_X, x }
   })
+  const campDamage = movedWarriors.filter((w) => w.fighting && w.x >= SIEGE_X && !nearestGoblin(s.goblins, w.x - 1, WARRIOR.reach + 1)).length *
+    WARRIOR.siegeDps * TICK_S
   let castleDamage = 0
   const goblins = s.goblins.map((g) => {
     const blocker = movedWarriors.filter((w) => g.x >= w.x - 1 && g.x - w.x <= WARRIOR.reach).sort((a, b) => b.x - a.x)[0]
@@ -407,7 +421,7 @@ const melee = (s: KingdomState): KingdomState => {
     const moved = movedWarriors.find((w) => w.id === u.id)
     return moved ? { ...moved, hp: moved.hp - (warriorDamage.get(u.id) ?? 0) } : u
   })
-  return { ...s, goblins, units, castleHp: shielded ? s.castleHp : s.castleHp - castleDamage }
+  return { ...s, goblins, units, castleHp: shielded ? s.castleHp : s.castleHp - castleDamage, campHp: Math.max(0, s.campHp - campDamage) }
 }
 
 /** Beaten goblins run home and fallen warriors go back to the castle to rest: nobody dies. */
@@ -436,6 +450,7 @@ export const tickKingdom = (s: KingdomState): KingdomState => {
   if (s.over) return s
   const next = sweep(melee(shoot(spawnGoblin(runPending({ ...s, tick: s.tick + 1 })))))
   if (next.castleHp <= 0) return { ...next, castleHp: 0, over: "lost" }
+  if (next.campHp <= 0) return { ...next, over: "won" }
   if (next.tick >= secondsToTicks(s.options.durationS)) return { ...next, over: "won" }
   return next
 }
@@ -466,6 +481,8 @@ export interface KingdomResult {
   readonly accuracy: number
   readonly repelled: number
   readonly orders: number
+  /** Won before dawn by breaking the goblin camp. */
+  readonly campBroken: boolean
 }
 
 export const kingdomResult = (s: KingdomState): KingdomResult => {
@@ -476,11 +493,12 @@ export const kingdomResult = (s: KingdomState): KingdomResult => {
   const stars = !won ? 0 : hpShare >= 0.7 ? 3 : hpShare >= 0.35 ? 2 : 1
   return {
     won,
-    points: s.stats.repelled * 10 + s.stats.orders * 2 + (won ? Math.round(s.castleHp) * 5 : 0),
+    points: s.stats.repelled * 10 + s.stats.orders * 2 + (won ? Math.round(s.castleHp) * 5 : 0) + (s.campHp <= 0 ? CAMP_BONUS : 0),
     stars,
     cpm: minutes > 0 ? Math.round(s.stats.typed / minutes) : 0,
     accuracy: keys > 0 ? Math.round((s.stats.typed / keys) * 100) : 100,
     repelled: s.stats.repelled,
+    campBroken: s.campHp <= 0,
     orders: s.stats.orders
   }
 }
