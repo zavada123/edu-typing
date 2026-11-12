@@ -6,6 +6,7 @@ import {
   emptyProgress,
   heatByCode,
   isUnlocked,
+  mergeProgress,
   nextLesson,
   parseProgress,
   recordLesson,
@@ -109,5 +110,43 @@ describe("certificate", () => {
   test("cleans the name and makes a readable number", () => {
     expect(cleanName("  Олена   Петренко \n")).toBe("Олена Петренко")
     expect(certificateNumber(new Date(2026, 9, 30), seededRandom(1))).toMatch(/^ET-26-[2-9A-Z]{6}$/)
+  })
+})
+
+describe("merge progress", () => {
+  const test1 = { cpm: 80, accuracy: 95, durationMs: 60000, layout: "uk" as const, date: "2026-11-01T10:00:00.000Z" }
+  const browser = {
+    lessons: { "uk-home-1": { stars: 3 as const, cpm: 70, accuracy: 97 }, "uk-home-2": { stars: 1 as const, cpm: 40, accuracy: 91 } },
+    keys: { а: { hits: 30, misses: 2 }, о: { hits: 5, misses: 1 } },
+    games: { letterfall: 120 },
+    bestTest: test1
+  }
+  const account = {
+    lessons: { "uk-home-2": { stars: 2 as const, cpm: 35, accuracy: 95 }, "uk-home-3": { stars: 1 as const, cpm: 30, accuracy: 90 } },
+    keys: { а: { hits: 10, misses: 0 }, в: { hits: 8, misses: 3 } },
+    games: { letterfall: 90, balloons: 40 }
+  }
+
+  test("keeps the best run of each lesson from both copies", () => {
+    const p = mergeProgress(browser, account)
+    expect(p.lessons).toEqual({
+      "uk-home-1": { stars: 3, cpm: 70, accuracy: 97 },
+      "uk-home-2": { stars: 2, cpm: 35, accuracy: 95 },
+      "uk-home-3": { stars: 1, cpm: 30, accuracy: 90 }
+    })
+  })
+
+  test("keeps the best games, the fuller key counters, and the best test", () => {
+    const p = mergeProgress(account, browser)
+    expect(p.games).toEqual({ letterfall: 120, balloons: 40 })
+    expect(p.keys).toEqual({ а: { hits: 30, misses: 2 }, о: { hits: 5, misses: 1 }, в: { hits: 8, misses: 3 } })
+    expect(p.bestTest).toEqual(test1)
+  })
+
+  test("joining a progress with itself or with empty progress changes nothing", () => {
+    expect(mergeProgress(browser, browser)).toEqual(browser)
+    expect(mergeProgress(emptyProgress, browser)).toEqual(browser)
+    expect(mergeProgress(account, emptyProgress)).toEqual(account)
+    expect("bestTest" in mergeProgress(account, emptyProgress)).toBe(false)
   })
 })
