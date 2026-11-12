@@ -23,8 +23,9 @@ const write = (key: string, p: Progress): void => {
 /**
  * Progress kept in localStorage. The first render uses empty progress, the stored one comes
  * in an effect: the same markup on the server and in the browser (SSR).
+ * `onChange` gets the whole progress after each change, for example to save it in the student account.
  */
-export const useProgress = (storageKey: string = DEFAULT_STORAGE_KEY) => {
+export const useProgress = (storageKey: string = DEFAULT_STORAGE_KEY, onChange?: (progress: Progress) => void) => {
   const [progress, setProgress] = useState<Progress>(emptyProgress)
 
   useEffect(() => setProgress(read(storageKey)), [storageKey])
@@ -35,8 +36,9 @@ export const useProgress = (storageKey: string = DEFAULT_STORAGE_KEY) => {
       const next = change(read(storageKey))
       write(storageKey, next)
       setProgress(next)
+      onChange?.(next)
     },
-    [storageKey]
+    [storageKey, onChange]
   )
 
   return [progress, update] as const

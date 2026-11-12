@@ -77,6 +77,41 @@ export const recordTest = (p: Progress, t: TestRecord): Progress => {
 export const recordGame = (p: Progress, gameId: string, points: number): Progress =>
   points > (p.games[gameId] ?? 0) ? { ...p, games: { ...p.games, [gameId]: points } } : p
 
+const betterLesson = (a: LessonBest, b: LessonBest): LessonBest =>
+  b.stars > a.stars || (b.stars === a.stars && b.cpm > a.cpm) ? b : a
+
+const betterTest = (a: TestRecord | undefined, b: TestRecord | undefined): TestRecord | undefined => {
+  if (!a) return b
+  if (!b) return a
+  return b.cpm * b.accuracy > a.cpm * a.accuracy ? b : a
+}
+
+/** Key statistics are counters of the same runs, so the larger record wins: they are not added together. */
+const fullerKey = (a: KeyStat, b: KeyStat): KeyStat => (b.hits + b.misses > a.hits + a.misses ? b : a)
+
+const joinRecords = <T>(a: Readonly<Record<string, T>>, b: Readonly<Record<string, T>>, pick: (x: T, y: T) => T): Record<string, T> => {
+  const out: Record<string, T> = { ...a }
+  for (const [id, value] of Object.entries(b)) {
+    const old = out[id]
+    out[id] = old === undefined ? value : pick(old, value)
+  }
+  return out
+}
+
+/**
+ * Join two copies of the progress, for example this browser and the account on the server: the best run of each
+ * lesson, the best test, the best score of each game. Joining a progress with itself gives the same progress.
+ */
+export const mergeProgress = (a: Progress, b: Progress): Progress => {
+  const base: Progress = {
+    lessons: joinRecords(a.lessons, b.lessons, betterLesson),
+    keys: joinRecords(a.keys, b.keys, fullerKey),
+    games: joinRecords(a.games, b.games, Math.max)
+  }
+  const bestTest = betterTest(a.bestTest, b.bestTest)
+  return bestTest ? { ...base, bestTest } : base
+}
+
 /** A lesson opens when the lesson before it (same layout) is passed. The first lesson is always open. */
 export const isUnlocked = (p: Progress, lessonId: string): boolean => {
   const index = lessons.findIndex((l) => l.id === lessonId)

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { type Certificate, learnedKeys, type LayoutId } from "../core/index.ts"
+import { type Certificate, learnedKeys, type LayoutId, type Progress } from "../core/index.ts"
 import { CourseView } from "./CourseView.tsx"
 import { BalloonsGame, type GameId, LetterfallGame } from "./games.tsx"
 import { KingdomGame } from "./kingdom/KingdomGame.tsx"
@@ -20,6 +20,11 @@ interface Props {
   readonly issuer?: string
   readonly onCertificate?: (certificate: Certificate) => void
   readonly onLessonComplete?: (report: Report) => void
+  /**
+   * The whole progress after each change (lesson, game, test). The host page can keep it on its server and give it
+   * back with `mergeProgress` on another device. Pass a stable function (`useCallback`).
+   */
+  readonly onProgressChange?: (progress: Progress) => void
   readonly initialTab?: StudioTab
 }
 
@@ -45,9 +50,10 @@ export const TypingStudio = ({
   issuer = "Тренажер сліпого друку",
   onCertificate,
   onLessonComplete,
+  onProgressChange,
   initialTab = "course"
 }: Props) => {
-  const [progress, update] = useProgress(storageKey)
+  const [progress, update] = useProgress(storageKey, onProgressChange)
   const [tab, setTab] = useState<StudioTab>(initialTab)
   const [layout, setLayout] = useState<LayoutId>("uk")
   const [game, setGame] = useState<GameId>("letterfall")
