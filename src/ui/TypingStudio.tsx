@@ -1,6 +1,7 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { type Certificate, learnedKeys, type LayoutId, type Progress } from "../core/index.ts"
 import { CourseView } from "./CourseView.tsx"
+import { useFullscreen } from "./fullscreen.ts"
 import { BalloonsGame, type GameId, LetterfallGame } from "./games.tsx"
 import { KingdomGame } from "./kingdom/KingdomGame.tsx"
 import { TypingTest } from "./TypingTest.tsx"
@@ -58,9 +59,11 @@ export const TypingStudio = ({
   const [layout, setLayout] = useState<LayoutId>("uk")
   const [game, setGame] = useState<GameId>("letterfall")
   const learned = learnedKeys(progress, layout)
+  const boxRef = useRef<HTMLDivElement>(null)
+  const full = useFullscreen(boxRef)
 
   return (
-    <div className="edu-studio">
+    <div className="edu-studio" ref={boxRef}>
       <nav className="edu-studio-nav">
         <span role="tablist" aria-label="Розділ" className="edu-tabs">
           {TABS.map((t) => (
@@ -76,6 +79,11 @@ export const TypingStudio = ({
             </button>
           ))}
         </span>
+        {full.available && (
+          <button type="button" className="edu-game-fullscreen" onClick={full.toggle} aria-pressed={full.on}>
+            {full.on ? "Вийти з повного екрана" : "На весь екран"}
+          </button>
+        )}
       </nav>
 
       {tab === "course" && (

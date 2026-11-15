@@ -1,4 +1,5 @@
 import { type KeyboardEvent, type ReactNode, useEffect, useRef, useState } from "react"
+import { useFullscreen } from "./fullscreen.ts"
 import "./studio.css"
 import {
   BALLOON_COLORS,
@@ -72,23 +73,6 @@ export interface ShellProps {
   readonly fieldClass: string
   /** Show a button that puts the game on the whole screen. */
   readonly fullscreen?: boolean
-}
-
-/** The game box is on the whole screen now; follows the browser, also when Esc leaves the full screen. */
-const useFullscreen = (box: { readonly current: HTMLDivElement | null }) => {
-  const [on, setOn] = useState(false)
-  useEffect(() => {
-    const sync = () => setOn(document.fullscreenElement !== null && document.fullscreenElement === box.current)
-    document.addEventListener("fullscreenchange", sync)
-    return () => document.removeEventListener("fullscreenchange", sync)
-  }, [box])
-  const toggle = () => {
-    if (on) void document.exitFullscreen().catch(() => undefined)
-    else void box.current?.requestFullscreen().catch(() => undefined)
-    box.current?.focus({ preventScroll: true })
-  }
-  const available = typeof document !== "undefined" && document.fullscreenEnabled === true
-  return { on, toggle, available }
 }
 
 const LIVES_ICON = "❤"
