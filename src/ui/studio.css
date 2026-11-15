@@ -637,3 +637,15 @@
   width: min(100%, calc((100vh - 110px) * 1024 / 492));
   margin: 0 auto;
 }
+
+/* The studio or one lesson on the whole screen: the page background and a scroll bar when it does not fit. */
+.edu-studio:fullscreen {
+  overflow: auto;
+  padding: 16px;
+  background: var(--edu-bg);
+}
+
+.edu-typing:fullscreen {
+  overflow: auto;
+  justify-content: center;
+}

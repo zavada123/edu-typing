@@ -18,6 +18,8 @@ import {
   type Session
 } from "../core/index.ts"
 import { Keyboard } from "./Keyboard.tsx"
+import { useFullscreen } from "./fullscreen.ts"
+import "./studio.css"
 import "./typing.css"
 
 /** What the host app gets after a finished run. */
@@ -36,6 +38,8 @@ interface Props {
   readonly timeLimitMs?: number
   /** Error rate 0–1 by key code: paints the keys where the student often makes mistakes. */
   readonly heat?: ReadonlyMap<string, number>
+  /** Show a button that puts the lesson on the whole screen (a lesson alone on a page, not in the studio). */
+  readonly fullscreen?: boolean
 }
 
 const FINGER_NAMES: Readonly<Record<Finger, string>> = {
@@ -70,7 +74,7 @@ const formatClock = (ms: number): string => {
 }
 
 /** Typing exercise: text, live speed, on-screen keyboard, result at the end. */
-export const TypingTrainer = ({ lesson, onComplete, large = false, timeLimitMs, heat }: Props) => {
+export const TypingTrainer = ({ lesson, onComplete, large = false, timeLimitMs, heat, fullscreen = false }: Props) => {
   const layout = LAYOUTS[lesson.layout]
   const [session, setSession] = useState<Session>(() => createSession(lesson.text))
   const [now, setNow] = useState(() => performance.now())
@@ -79,6 +83,7 @@ export const TypingTrainer = ({ lesson, onComplete, large = false, timeLimitMs, 
   const [report, setReport] = useState<Report>()
   const [pressed, setPressed] = useState<ReadonlySet<string>>(new Set())
   const boxRef = useRef<HTMLDivElement>(null)
+  const full = useFullscreen(boxRef)
 
   // preventScroll: the trainer may sit low on a long page; focus must not jump there.
   useEffect(() => boxRef.current?.focus({ preventScroll: true }), [])
@@ -160,6 +165,11 @@ export const TypingTrainer = ({ lesson, onComplete, large = false, timeLimitMs, 
           {left !== undefined && <b className="edu-typing-clock">{formatClock(left)} · </b>}
           {live.cpm} зн/хв · точність {live.accuracy}% · помилок {live.mistakes}
         </span>
+        {fullscreen && full.available && (
+          <button type="button" className="edu-game-fullscreen" onClick={full.toggle} aria-pressed={full.on}>
+            {full.on ? "Вийти з повного екрана" : "На весь екран"}
+          </button>
+        )}
       </header>
 
       {report ? (
