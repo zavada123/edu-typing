@@ -58,14 +58,20 @@ export const recordKeys = (p: Progress, typed: string, mistakesByChar: Readonly<
   return { ...p, keys }
 }
 
-/** Keep the best run of the lesson: more stars, then higher speed. */
-export const recordLesson = (p: Progress, lesson: Lesson, r: Result, s: Score): Progress => {
+/**
+ * Keep the best run of the lesson (more stars, then higher speed) without the key statistics. For a run tapped on the
+ * on-screen keys (a phone): the lesson counts and opens the next one, but taps do not tell which fingers make mistakes.
+ */
+export const recordLessonRun = (p: Progress, lesson: Lesson, r: Result, s: Score): Progress => {
   const old = p.lessons[lesson.id]
   const better = !old || s.stars > old.stars || (s.stars === old.stars && r.cpm > old.cpm)
-  const withKeys = recordKeys(p, lesson.text.slice(0, r.chars), r.mistakesByChar)
-  if (!better) return withKeys
-  return { ...withKeys, lessons: { ...withKeys.lessons, [lesson.id]: { stars: s.stars, cpm: r.cpm, accuracy: r.accuracy } } }
+  if (!better) return p
+  return { ...p, lessons: { ...p.lessons, [lesson.id]: { stars: s.stars, cpm: r.cpm, accuracy: r.accuracy } } }
 }
+
+/** Keep the best run of the lesson (more stars, then higher speed) and add the run to the key statistics. */
+export const recordLesson = (p: Progress, lesson: Lesson, r: Result, s: Score): Progress =>
+  recordLessonRun(recordKeys(p, lesson.text.slice(0, r.chars), r.mistakesByChar), lesson, r, s)
 
 /** Keep the higher test result; accuracy breaks a tie. */
 export const recordTest = (p: Progress, t: TestRecord): Progress => {
