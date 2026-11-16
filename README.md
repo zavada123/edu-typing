@@ -39,7 +39,7 @@ The student-facing interface is in Ukrainian. It was built for [EduProstir](http
 - **Wrong-layout detection:** if the student types Latin letters in a Ukrainian lesson, the trainer asks them to switch the input language and does not count it as a mistake.
 - **Results:** characters per minute, words per minute, accuracy, time, most frequent mistakes, 0–3 stars.
 - **Large mode** for younger students.
-- **Works on phones:** the on-screen keys can be tapped. Such a result is marked `input: "touch"`, so your app can choose not to grade it.
+- **Works on phones:** the on-screen keys can be tapped. Such a result is marked `input: "touch"`, so your app can choose not to grade it. In the studio a lesson tapped on a phone keeps its stars and opens the next lesson; only the key statistics and the certificate need a real keyboard.
 - **Full course:** 28 Ukrainian lessons (home row, top row, bottom row, apostrophe, comma, digits, punctuation, texts) and 19 English lessons. Each lesson adds a few keys and uses only keys learned before; the tests check this.
 - **Progress in the browser:** stars per lesson, the next lesson opens after the previous one, a "Continue" button, and a heat map of the keys with the most mistakes.
 - **Adaptive practice:** a fresh exercise from the keys the student knows, with more words that contain their weak keys.

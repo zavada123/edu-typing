@@ -12,6 +12,7 @@ import {
   practiceLesson,
   type Progress,
   recordLesson,
+  recordLessonRun,
   score,
   seededRandom,
   units,
@@ -64,9 +65,9 @@ export const CourseView = ({ layout, progress, onProgress, large, onLessonComple
 
   const onComplete = (report: Report) => {
     if (!lesson) return
-    if (report.input === "keyboard") {
-      onProgress((p) => recordLesson(p, lesson, report, score(report, lesson.goal)))
-    }
+    // A run on the on-screen keys (a phone) counts too, so the student keeps the lesson; only the key statistics skip it.
+    const s = score(report, lesson.goal)
+    onProgress((p) => (report.input === "keyboard" ? recordLesson(p, lesson, report, s) : recordLessonRun(p, lesson, report, s)))
     setPassed(report.passed)
     onLessonComplete?.(report)
   }
