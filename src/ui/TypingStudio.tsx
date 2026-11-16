@@ -1,5 +1,5 @@
 import { useRef, useState } from "react"
-import { type Certificate, learnedKeys, type LayoutId, type Progress } from "../core/index.ts"
+import { type Certificate, learnedKeys, type LayoutId, type Lesson, lessons, type Progress, type StudioPlace } from "../core/index.ts"
 import { CourseView } from "./CourseView.tsx"
 import { useFullscreen } from "./fullscreen.ts"
 import { BalloonsGame, type GameId, LetterfallGame } from "./games.tsx"
@@ -27,6 +27,21 @@ interface Props {
    */
   readonly onProgressChange?: (progress: Progress) => void
   readonly initialTab?: StudioTab
+  /**
+   * The place to open at once: a lesson, a game, the test or the lesson map (a link to one lesson). It wins over
+   * `initialTab`. Read it from the address with `parseStudioPlace(location.search)`.
+   */
+  readonly initialPlace?: StudioPlace | undefined
+  /** The place after each move of the student (tab, lesson, game). Write it to the address with `formatStudioPlace`. */
+  readonly onPlaceChange?: (place: StudioPlace) => void
+}
+
+const lessonOf = (place: StudioPlace | undefined): Lesson | undefined =>
+  place?.tab === "lesson" ? lessons.find((l) => l.id === place.lesson) : undefined
+
+const tabOf = (place: StudioPlace | undefined, fallback: StudioTab): StudioTab => {
+  if (place === undefined) return fallback
+  return place.tab === "lesson" ? "course" : place.tab
 }
 
 const TABS: ReadonlyArray<{ readonly id: StudioTab; readonly label: string }> = [
@@ -52,12 +67,34 @@ export const TypingStudio = ({
   onCertificate,
   onLessonComplete,
   onProgressChange,
-  initialTab = "course"
+  initialTab = "course",
+  initialPlace,
+  onPlaceChange
 }: Props) => {
   const [progress, update] = useProgress(storageKey, onProgressChange)
-  const [tab, setTab] = useState<StudioTab>(initialTab)
-  const [layout, setLayout] = useState<LayoutId>("uk")
-  const [game, setGame] = useState<GameId>("letterfall")
+  // The linked lesson opens once: after any move the lesson map opens as usual.
+  const [initialLesson, setInitialLesson] = useState(() => lessonOf(initialPlace))
+  const [tab, setTab] = useState<StudioTab>(() => tabOf(initialPlace, initialTab))
+  const [layout, setLayout] = useState<LayoutId>(initialLesson?.layout ?? "uk")
+  const [game, setGame] = useState<GameId>(initialPlace?.tab === "games" ? initialPlace.game : "letterfall")
+  const moved = (place: StudioPlace) => {
+    setInitialLesson(undefined)
+    onPlaceChange?.(place)
+  }
+  const placeOfTab = (t: StudioTab): StudioPlace => (t === "games" ? { tab: "games", game } : { tab: t })
+  const chooseTab = (t: StudioTab) => {
+    setTab(t)
+    moved(placeOfTab(t))
+  }
+  const chooseLayout = (l: LayoutId) => {
+    setLayout(l)
+    // The lesson map of the other layout opens: an open lesson closes.
+    if (tab === "course") moved({ tab: "course" })
+  }
+  const chooseGame = (g: GameId) => {
+    setGame(g)
+    moved({ tab: "games", game: g })
+  }
   const learned = learnedKeys(progress, layout)
   const boxRef = useRef<HTMLDivElement>(null)
   const full = useFullscreen(boxRef)
@@ -67,14 +104,14 @@ export const TypingStudio = ({
       <nav className="edu-studio-nav">
         <span role="tablist" aria-label="Розділ" className="edu-tabs">
           {TABS.map((t) => (
-            <button key={t.id} type="button" role="tab" aria-selected={t.id === tab} onClick={() => setTab(t.id)}>
+            <button key={t.id} type="button" role="tab" aria-selected={t.id === tab} onClick={() => chooseTab(t.id)}>
               {t.label}
             </button>
           ))}
         </span>
         <span role="radiogroup" aria-label="Розкладка" className="edu-seg">
           {(["uk", "en"] as const).map((l) => (
-            <button key={l} type="button" role="radio" aria-checked={l === layout} onClick={() => setLayout(l)}>
+            <button key={l} type="button" role="radio" aria-checked={l === layout} onClick={() => chooseLayout(l)}>
               {LAYOUT_LABELS[l]}
             </button>
           ))}
@@ -87,14 +124,23 @@ export const TypingStudio = ({
       </nav>
 
       {tab === "course" && (
-        <CourseView key={layout} layout={layout} progress={progress} onProgress={update} large={large} onLessonComplete={onLessonComplete} />
+        <CourseView
+          key={layout}
+          layout={layout}
+          progress={progress}
+          onProgress={update}
+          large={large}
+          onLessonComplete={onLessonComplete}
+          initialLesson={initialLesson}
+          onLessonChange={(l) => moved(l === undefined ? { tab: "course" } : { tab: "lesson", lesson: l.id })}
+        />
       )}
 
       {tab === "games" && (
         <div className="edu-games">
           <span role="radiogroup" aria-label="Гра" className="edu-game-pick">
             {GAMES.map((g) => (
-              <button key={g.id} type="button" role="radio" aria-checked={g.id === game} onClick={() => setGame(g.id)}>
+              <button key={g.id} type="button" role="radio" aria-checked={g.id === game} onClick={() => chooseGame(g.id)}>
                 <b>{g.title}</b>
                 <small>{g.about}</small>
                 {(progress.games[g.id] ?? 0) > 0 && <small>Рекорд: {progress.games[g.id]}</small>}
