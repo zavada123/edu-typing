@@ -22,9 +22,10 @@ import {
   WORDS,
   wordsWithin
 } from "../core/index.ts"
+import type { GameId } from "../core/index.ts"
 import { Keyboard } from "./Keyboard.tsx"
 
-export type GameId = "letterfall" | "balloons" | "kingdom"
+export type { GameId }
 
 /** Longest frame step: after a background tab the game must not jump forward. */
 const MAX_FRAME_MS = 100

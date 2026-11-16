@@ -76,6 +76,8 @@ import { TypingStudio } from "edu-typing"
 
 Tabs: lessons, games, and the speed test with a certificate. Progress is kept in `localStorage` under `storageKey`. `onCertificate` gets the level, speed, accuracy, date and the number printed on the certificate, so your app can keep a list of certificates for the student. `onProgressChange` gets the whole progress after each change, so your app can keep it on its server; on another device, join the saved copy with the one in the browser with `mergeProgress(local, saved)` (from `edu-typing/core`), write it to `localStorage` under `storageKey`, and mount the studio again.
 
+A link to one lesson or game: pass `initialPlace={parseStudioPlace(location.hash)}` and `onPlaceChange={(place) => history.replaceState(null, "", "#" + formatStudioPlace(place))}`. The link texts are `course`, `lesson/<lesson id>`, `games/<letterfall|balloons|kingdom>` and `test`, for example `/typing#lesson/uk-home-3`. A linked lesson opens even when it is still locked on the lesson map.
+
 ### One lesson
 
 ```tsx

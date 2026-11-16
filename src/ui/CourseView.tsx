@@ -26,6 +26,10 @@ interface Props {
   readonly onProgress: (change: (p: Progress) => Progress) => void
   readonly large: boolean
   readonly onLessonComplete?: ((report: Report) => void) | undefined
+  /** The lesson to open at once (a link to one lesson); it must be of this layout. */
+  readonly initialLesson?: Lesson | undefined
+  /** The opened lesson of the lesson list, or `undefined` back on the map (also for free practice). */
+  readonly onLessonChange?: ((lesson: Lesson | undefined) => void) | undefined
 }
 
 const WEAK_LIMIT = 5
@@ -38,8 +42,8 @@ const Stars = ({ count }: { readonly count: number }) => (
 )
 
 /** The lesson map: units, stars, the next lesson, and practice of weak keys. */
-export const CourseView = ({ layout, progress, onProgress, large, onLessonComplete }: Props) => {
-  const [lesson, setLesson] = useState<Lesson>()
+export const CourseView = ({ layout, progress, onProgress, large, onLessonComplete, initialLesson, onLessonChange }: Props) => {
+  const [lesson, setLesson] = useState<Lesson | undefined>(initialLesson?.layout === layout ? initialLesson : undefined)
   const [run, setRun] = useState(0)
   const [passed, setPassed] = useState(false)
 
@@ -47,6 +51,11 @@ export const CourseView = ({ layout, progress, onProgress, large, onLessonComple
     setLesson(l)
     setPassed(false)
     setRun((n) => n + 1)
+    onLessonChange?.(lessons.some((x) => x.id === l.id) ? l : undefined)
+  }
+  const close = () => {
+    setLesson(undefined)
+    onLessonChange?.(undefined)
   }
 
   const weak = weakKeys(progress, WEAK_LIMIT)
@@ -69,7 +78,7 @@ export const CourseView = ({ layout, progress, onProgress, large, onLessonComple
     return (
       <div className="edu-course">
         <div className="edu-course-bar">
-          <button type="button" className="edu-btn edu-btn-ghost" onClick={() => setLesson(undefined)}>
+          <button type="button" className="edu-btn edu-btn-ghost" onClick={close}>
             ← До уроків
           </button>
           {passed && hasNext && (
