@@ -29,7 +29,7 @@ interface Props {
   readonly initialTab?: StudioTab
   /**
    * The place to open at once: a lesson, a game, the test or the lesson map (a link to one lesson). It wins over
-   * `initialTab`. Read it from the address with `parseStudioPlace`.
+   * `initialTab`. Read it from the address with `parseStudioPlace(location.search)`.
    */
   readonly initialPlace?: StudioPlace | undefined
   /** The place after each move of the student (tab, lesson, game). Write it to the address with `formatStudioPlace`. */

@@ -16,31 +16,38 @@ export type StudioPlace =
 
 const isGameId = (text: string): text is GameId => GAME_IDS.some((g) => g === text)
 
+/** Address parameters of a place: `?lesson=<id>`, `?game=<id>` or `?tab=test`. */
+export const PLACE_PARAMS = ["lesson", "game", "tab"] as const
+
 /**
- * The place of a link text: `course`, `lesson/<lesson id>`, `games/<game id>` or `test` (a leading `#` is allowed).
- * Unknown text gives `undefined`.
+ * The place of an address query (`location.search`): `?lesson=<lesson id>`, `?game=<game id>`, `?tab=test` or
+ * `?tab=course`. No parameter or an unknown lesson or game gives `undefined`.
  */
-export const parseStudioPlace = (text: string): StudioPlace | undefined => {
-  const value = text.replace(/^#/, "")
-  if (value === "course") return { tab: "course" }
-  if (value === "test") return { tab: "test" }
-  const [kind, id = "", ...rest] = value.split("/")
-  if (rest.length > 0) return undefined
-  if (kind === "lesson" && lessons.some((l) => l.id === id)) return { tab: "lesson", lesson: id }
-  if (kind === "games" && isGameId(id)) return { tab: "games", game: id }
+export const parseStudioPlace = (search: string): StudioPlace | undefined => {
+  const params = new URLSearchParams(search)
+  const lesson = params.get("lesson")
+  if (lesson !== null) return lessons.some((l) => l.id === lesson) ? { tab: "lesson", lesson } : undefined
+  const game = params.get("game")
+  if (game !== null) return isGameId(game) ? { tab: "games", game } : undefined
+  const tab = params.get("tab")
+  if (tab === "test") return { tab: "test" }
+  if (tab === "course") return { tab: "course" }
   return undefined
 }
 
-/** The link text of a place; `parseStudioPlace` reads it back. */
-export const formatStudioPlace = (place: StudioPlace): string => {
+/**
+ * The address parameters of a place; `parseStudioPlace` reads them back. The lesson map has none. The host page sets
+ * them and deletes the other names of `PLACE_PARAMS`.
+ */
+export const formatStudioPlace = (place: StudioPlace): Readonly<Record<string, string>> => {
   switch (place.tab) {
     case "course":
-      return "course"
+      return {}
     case "lesson":
-      return `lesson/${place.lesson}`
+      return { lesson: place.lesson }
     case "games":
-      return `games/${place.game}`
+      return { game: place.game }
     case "test":
-      return "test"
+      return { tab: "test" }
   }
 }
