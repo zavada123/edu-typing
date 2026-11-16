@@ -10,6 +10,7 @@ import {
   nextLesson,
   parseProgress,
   recordLesson,
+  recordLessonRun,
   recordTest,
   weakKeys
 } from "./progress.ts"
@@ -41,6 +42,14 @@ describe("progress", () => {
 
   test("the first English lesson is open from the start", () => {
     expect(isUnlocked(emptyProgress, "en-home-1")).toBe(true)
+  })
+
+  test("a run on the on-screen keys opens the next lesson without the key statistics", () => {
+    if (!first || !second) throw new Error("no lessons")
+    const p = recordLessonRun(emptyProgress, first, run(50, 95, first.text.length, { а: 2 }), { passed: true, stars: 2 })
+    expect(p.lessons[first.id]).toEqual({ stars: 2, cpm: 50, accuracy: 95 })
+    expect(p.keys).toEqual({})
+    expect(isUnlocked(p, second.id)).toBe(true)
   })
 
   test("keeps the best run only", () => {
