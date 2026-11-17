@@ -21,6 +21,8 @@ import { Keyboard } from "./Keyboard.tsx"
 import { useFullscreen } from "./fullscreen.ts"
 import "./studio.css"
 import "./typing.css"
+import "./rich-text.css"
+import { RichText } from "./RichText.tsx"
 
 /** What the host app gets after a finished run. */
 export interface Report extends Result, Score {
@@ -56,7 +58,7 @@ const FINGER_NAMES: Readonly<Record<Finger, string>> = {
 
 const LIVE_TICK_MS = 500
 
-const showChar = (c: string): string => (c === " " ? "пробіл" : `«${c}»`)
+const showChar = (c: string): string => (c === " " ? "[k]Пробіл[/k]" : `[k]${c}[/k]`)
 
 /** Long texts (a timed test) show only a window around the cursor. */
 const WINDOW_BEFORE = 40
@@ -177,7 +179,7 @@ export const TypingTrainer = ({ lesson, onComplete, large = false, timeLimitMs, 
       ) : (
         <>
           <p className="edu-typing-hint">
-            {session.startedAt === undefined ? lesson.hint : " "}
+            {session.startedAt === undefined ? <RichText text={lesson.hint} /> : " "}
           </p>
           <p className="edu-typing-text" aria-label={lesson.text}>
             {from > 0 && <span className="edu-typing-more">… </span>}
@@ -191,12 +193,16 @@ export const TypingTrainer = ({ lesson, onComplete, large = false, timeLimitMs, 
             {to < session.text.length && <span className="edu-typing-more"> …</span>}
           </p>
           <p className="edu-typing-next" role="status">
-            {wrongLayout
-              ? "Перемкни мову клавіатури на " + (lesson.layout === "uk" ? "українську" : "англійську") + " (Alt+Shift або Win+Пробіл)."
-              : target && expected !== undefined
-                ? `Натисни ${showChar(expected)}: ${FINGER_NAMES[target.key.finger]}` +
-                  (target.shift ? `, ${shiftSide(target.key.finger) === "ShiftLeft" ? "лівий" : "правий"} Shift` : "")
-                : " "}
+            <RichText
+              text={
+                wrongLayout
+                  ? "Перемкни мову клавіатури на " + (lesson.layout === "uk" ? "українську" : "англійську") + " ([k]Alt+Shift[/k] або [k]Win+Пробіл[/k])."
+                  : target && expected !== undefined
+                    ? `Натисни ${showChar(expected)}: ${FINGER_NAMES[target.key.finger]}` +
+                      (target.shift ? `, ${shiftSide(target.key.finger) === "ShiftLeft" ? "лівий" : "правий"} [k]Shift[/k]` : "")
+                    : " "
+              }
+            />
           </p>
         </>
       )}
@@ -245,7 +251,9 @@ const ResultView = ({ report, lesson, onRestart }: ResultProps) => {
         </li>
       </ul>
       {worst.length > 0 && (
-        <p className="edu-typing-worst">Найбільше помилок: {worst.map(([c, n]) => `${showChar(c)} ×${n}`).join(", ")}</p>
+        <p className="edu-typing-worst">
+          <RichText text={`Найбільше помилок: ${worst.map(([c, n]) => `${showChar(c)} ×${n}`).join(", ")}`} />
+        </p>
       )}
       {report.input === "touch" && (
         <p className="edu-typing-worst">Вправу набрано на екранних клавішах. Для оцінки потрібна справжня клавіатура.</p>

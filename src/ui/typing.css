@@ -5,6 +5,7 @@
   --edu-done: #16a34a;
   --edu-wrong: #dc2626;
   --edu-accent: #2563eb;
+  --rt-accent: #1d4ed8;
   --edu-text-size: clamp(20px, 4.5vw, 30px);
   display: flex;
   flex-direction: column;
