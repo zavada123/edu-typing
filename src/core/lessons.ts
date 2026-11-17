@@ -67,7 +67,7 @@ export const units: readonly Unit[] = [
     {
       id: "uk-home-1",
       title: "Основний ряд: А і О",
-      hint: "Поклади вказівні пальці на клавіші А і О: на них є горбики. Великий палець — на пробілі.",
+      hint: "Поклади вказівні пальці на клавіші [k]А[/k] і [k]О[/k]: на них є горбики. Великий палець — на **пробілі**.",
       text: "ааа ооо ааа ооо ао оа ао оа аоа оао аа оо ао оа",
       goal: BEGINNER,
       newKeys: "ао "
@@ -75,7 +75,7 @@ export const units: readonly Unit[] = [
     {
       id: "uk-home-2",
       title: "Основний ряд: В і Л",
-      hint: "Середні пальці лежать на В і Л. Після кожної літери повертай палець на місце.",
+      hint: "Середні пальці лежать на [k]В[/k] і [k]Л[/k]. Після кожної літери повертай палець на місце.",
       text: "ввв ллл вл лв ава оло вал лав вола лава ало вал",
       goal: BEGINNER,
       newKeys: "вл"
@@ -83,7 +83,7 @@ export const units: readonly Unit[] = [
     {
       id: "uk-home-3",
       title: "Основний ряд: І і Д",
-      hint: "Безіменні пальці лежать на І і Д.",
+      hint: "Безіменні пальці лежать на [k]І[/k] і [k]Д[/k].",
       text: "ііі ддд ід ді від дід віл дало вода лід далі ліва",
       goal: BEGINNER,
       newKeys: "ід"
@@ -91,7 +91,7 @@ export const units: readonly Unit[] = [
     {
       id: "uk-home-4",
       title: "Основний ряд: Ф і Ж",
-      hint: "Мізинці лежать на Ф і Ж. Тепер усі вісім пальців на своїх місцях.",
+      hint: "Мізинці лежать на [k]Ф[/k] і [k]Ж[/k]. Тепер усі вісім пальців на своїх місцях.",
       text: "ффф жжж фж жф жало вожді фал жвава ждала дожді",
       goal: BEGINNER,
       newKeys: "фж"
@@ -99,7 +99,7 @@ export const units: readonly Unit[] = [
     {
       id: "uk-home-pr",
       title: "Основний ряд: П і Р",
-      hint: "П натискай лівим вказівним, Р — правим: палець робить маленький крок до центру й повертається.",
+      hint: "[k]П[/k] натискай лівим вказівним, [k]Р[/k] — правим: палець робить маленький крок до центру й повертається.",
       text: "ппп ррр пр рп пара рада лапа ріпа пора жар пожар двір вправа парад",
       goal: BEGINNER,
       newKeys: "пр"
@@ -107,7 +107,7 @@ export const units: readonly Unit[] = [
     {
       id: "uk-home-ye",
       title: "Основний ряд: Є",
-      hint: "Є — праворуч від Ж. Тягнися правим мізинцем, решта пальців лишається на місці.",
+      hint: "[k]Є[/k] — праворуч від [k]Ж[/k]. Тягнися правим мізинцем, решта пальців лишається на місці.",
       text: "єєє жєж дає падає плаває віддає радіє жаліє воліє подає пропадає",
       goal: BEGINNER,
       newKeys: "є"
@@ -123,7 +123,7 @@ export const units: readonly Unit[] = [
     {
       id: "uk-home-caps",
       title: "Великі літери",
-      hint: "Shift натискай мізинцем іншої руки: для «О» — лівий Shift, для «В» — правий.",
+      hint: "[k]Shift[/k] натискай мізинцем іншої руки: для [k]О[/k] — лівий [k]Shift[/k], для [k]В[/k] — правий.",
       text: "Вода Лава Діло Ліда Віл Алла Ода Дід Вова Жало",
       goal: BEGINNER,
       newKeys: ""
@@ -133,7 +133,7 @@ export const units: readonly Unit[] = [
     {
       id: "uk-top-kg",
       title: "Верхній ряд: К і Г",
-      hint: "К — над А, натискай лівим вказівним. Г — над О, правим вказівним.",
+      hint: "[k]К[/k] — над [k]А[/k], натискай лівим вказівним. [k]Г[/k] — над [k]О[/k], правим вказівним.",
       text: "ккк ггг кг гк гора кора крок рак гак лак кров дорога голова плакав гавкав",
       goal: ROWS,
       newKeys: "кг"
@@ -141,7 +141,7 @@ export const units: readonly Unit[] = [
     {
       id: "uk-top-en",
       title: "Верхній ряд: Е і Н",
-      hint: "Е і Н — у самому центрі. Вказівні пальці тягнуться навскіс угору.",
+      hint: "[k]Е[/k] і [k]Н[/k] — у самому центрі. Вказівні пальці тягнуться навскіс угору.",
       text: "еее ннн ен не поле перо нога вікно пенал дерево ранок жінка гнів пекар лелека",
       goal: ROWS,
       newKeys: "ен"
@@ -149,7 +149,7 @@ export const units: readonly Unit[] = [
     {
       id: "uk-top-ush",
       title: "Верхній ряд: У і Ш",
-      hint: "У натискай лівим середнім пальцем, Ш — правим середнім.",
+      hint: "[k]У[/k] натискай лівим середнім пальцем, [k]Ш[/k] — правим середнім.",
       text: "ууу шшш уш шу рука груша душа шапка вушко шкіра пошук друг лук дуже шкода",
       goal: ROWS,
       newKeys: "уш"
@@ -157,7 +157,7 @@ export const units: readonly Unit[] = [
     {
       id: "uk-top-tsshch",
       title: "Верхній ряд: Ц і Щ",
-      hint: "Ц — лівий безіменний, Щ — правий безіменний.",
+      hint: "[k]Ц[/k] — лівий безіменний, [k]Щ[/k] — правий безіменний.",
       text: "ццц щщщ цщ щц дощ кущ щука цукор цегла площа палац оцінка щедро цукерка щогла",
       goal: ROWS,
       newKeys: "цщ"
@@ -165,7 +165,7 @@ export const units: readonly Unit[] = [
     {
       id: "uk-top-yz",
       title: "Верхній ряд: Й і З",
-      hint: "Й — лівий мізинець, З — правий мізинець.",
+      hint: "[k]Й[/k] — лівий мізинець, [k]З[/k] — правий мізинець.",
       text: "ййй ззз йз зй гай край гроза ваза лоза зірка зерно казка фазан дзвін гойдалка",
       goal: ROWS,
       newKeys: "йз"
@@ -173,7 +173,7 @@ export const units: readonly Unit[] = [
     {
       id: "uk-top-khyi",
       title: "Верхній ряд: Х, Ї і Ґ",
-      hint: "Х, Ї і Ґ — у правому кінці ряду. Усі три натискає правий мізинець.",
+      hint: "[k]Х[/k], [k]Ї[/k] і [k]Ґ[/k] — у правому кінці ряду. Усі три натискає правий мізинець.",
       text: "ххх їїї ґґґ хор дух вухо горіх кожух їжак їжа їде гаї краї ґанок ґава",
       goal: ROWS,
       newKeys: "хїґ"
@@ -191,7 +191,7 @@ export const units: readonly Unit[] = [
     {
       id: "uk-bottom-mytj",
       title: "Нижній ряд: М, И, Т і Ь",
-      hint: "М і И натискає лівий вказівний, Т і Ь — правий вказівний. Пальці опускаються вниз і повертаються.",
+      hint: "[k]М[/k] і [k]И[/k] натискає лівий вказівний, [k]Т[/k] і [k]Ь[/k] — правий вказівний. Пальці опускаються вниз і повертаються.",
       text: "ммм иии ттт ььь мама тато мати кіт кінь тінь день тиша миша дитина вітер літо",
       goal: ROWS,
       newKeys: "мить"
@@ -199,7 +199,7 @@ export const units: readonly Unit[] = [
     {
       id: "uk-bottom-sb",
       title: "Нижній ряд: С і Б",
-      hint: "С — лівий середній палець, Б — правий середній.",
+      hint: "[k]С[/k] — лівий середній палець, [k]Б[/k] — правий середній.",
       text: "ссс ббб сб бс сад сова село небо хліб сонце брат батько собака стіл білка сміх",
       goal: ROWS,
       newKeys: "сб"
@@ -207,7 +207,7 @@ export const units: readonly Unit[] = [
     {
       id: "uk-bottom-chyu",
       title: "Нижній ряд: Ч і Ю",
-      hint: "Ч — лівий безіменний, Ю — правий безіменний.",
+      hint: "[k]Ч[/k] — лівий безіменний, [k]Ю[/k] — правий безіменний.",
       text: "ччч ююю чю юч ніч очі річка вечір чашка ключ юнак люди юшка читаю",
       goal: ROWS,
       newKeys: "чю"
@@ -215,7 +215,7 @@ export const units: readonly Unit[] = [
     {
       id: "uk-bottom-ya",
       title: "Нижній ряд: Я і крапка",
-      hint: "Я — лівий мізинець. Крапка — праворуч від Ю, її натискає правий мізинець.",
+      hint: "[k]Я[/k] — лівий мізинець. Крапка — праворуч від [k]Ю[/k], її натискає правий мізинець.",
       text: "яяя ... я. я. яблуко. земля. пісня. мрія. моя мама. я читаю. ясно.",
       goal: ROWS,
       newKeys: "я."
@@ -223,7 +223,7 @@ export const units: readonly Unit[] = [
     {
       id: "uk-bottom-words",
       title: "Речення з усіх літер",
-      hint: "Тепер ти знаєш усі літери. Велика літера на початку речення — через Shift.",
+      hint: "Тепер ти знаєш усі літери. Велика літера на початку речення — через [k]Shift[/k].",
       text: "Сонце сяє. Діти біжать до річки. Бабуся пече смачні пиріжки. Ми любимо свою школу.",
       goal: WORDS,
       newKeys: ""
@@ -233,7 +233,7 @@ export const units: readonly Unit[] = [
     {
       id: "uk-signs-apostrophe",
       title: "Апостроф",
-      hint: "Апостроф — ліворуч від цифри 1, натискай лівим мізинцем.",
+      hint: "Апостроф — ліворуч від [k]1[/k], натискай лівим мізинцем.",
       text: "''' м'яч сім'я п'ять дев'ять пір'я м'ята в'юн з'їв під'їзд ім'я",
       goal: SIGNS,
       newKeys: "'"
@@ -241,7 +241,7 @@ export const units: readonly Unit[] = [
     {
       id: "uk-signs-comma",
       title: "Кома",
-      hint: "Кома — це Shift і клавіша крапки. Shift тисни лівим мізинцем.",
+      hint: "Кома — це [k]Shift[/k] і клавіша крапки. [k]Shift[/k] тисни лівим мізинцем.",
       text: "Мама, тато, брат і я. Раз, два, три. Тихо, тихо, не шуми. Сонце, вітер, дощ.",
       goal: SIGNS,
       newKeys: ","
@@ -257,7 +257,7 @@ export const units: readonly Unit[] = [
     {
       id: "uk-signs-punctuation",
       title: "Знак оклику, питання, двокрапка",
-      hint: "! — Shift і 1, ? — Shift і 7, : — Shift і 6, ; — Shift і 4. Дефіс — праворуч від 0.",
+      hint: "[k]![/k] — [k]Shift[/k] і [k]1[/k], [k]?[/k] — [k]Shift[/k] і [k]7[/k], [k]:[/k] — [k]Shift[/k] і [k]6[/k], [k];[/k] — [k]Shift[/k] і [k]4[/k]. Дефіс — праворуч від [k]0[/k].",
       text: "Привіт! Як справи? Усе добре. Чи готовий ти? Так! Увага: старт; раз - два - три!",
       goal: SIGNS,
       newKeys: "!?:;-"
@@ -291,7 +291,7 @@ export const units: readonly Unit[] = [
     {
       id: "uk-texts-rare",
       title: "Рідкісні літери",
-      hint: "У цьому тексті є Ґ, Є, Ї та апостроф.",
+      hint: "У цьому тексті є [k]Ґ[/k], [k]Є[/k], [k]Ї[/k] та апостроф.",
       text: "Ґелґотять гуси біля ставу. Їжачок ніс яблуко на голках. Єнот з'їв усі горіхи і заснув.",
       goal: TEXTS,
       newKeys: ""
@@ -301,7 +301,7 @@ export const units: readonly Unit[] = [
     {
       id: "en-home-1",
       title: "Home row: F and J",
-      hint: "Поклади вказівні пальці на F і J: на них є горбики.",
+      hint: "Поклади вказівні пальці на [k]F[/k] і [k]J[/k]: на них є горбики.",
       text: "fff jjj fj jf fjf jfj ff jj fj jf fjj jff",
       goal: BEGINNER,
       newKeys: "fj "
@@ -309,7 +309,7 @@ export const units: readonly Unit[] = [
     {
       id: "en-home-dk",
       title: "Home row: D and K",
-      hint: "Середні пальці лежать на D і K.",
+      hint: "Середні пальці лежать на [k]D[/k] і [k]K[/k].",
       text: "ddd kkk dk kd fdk jkd dj kf fjdk kdjf dkd kfk",
       goal: BEGINNER,
       newKeys: "dk"
@@ -317,7 +317,7 @@ export const units: readonly Unit[] = [
     {
       id: "en-home-sl",
       title: "Home row: S and L",
-      hint: "Безіменні пальці лежать на S і L.",
+      hint: "Безіменні пальці лежать на [k]S[/k] і [k]L[/k].",
       text: "sss lll sl ls sld lks sjl fls kls dls jls fsl",
       goal: BEGINNER,
       newKeys: "sl"
@@ -325,7 +325,7 @@ export const units: readonly Unit[] = [
     {
       id: "en-home-a",
       title: "Home row: A and ;",
-      hint: "Мізинці лежать на A і ; (крапка з комою).",
+      hint: "Мізинці лежать на [k]A[/k] і [k];[/k] (крапка з комою).",
       text: "aaa ;;; a; ;a ask; lad; sad; fad; all; fall; flask; salad;",
       goal: BEGINNER,
       newKeys: "a;"
@@ -333,7 +333,7 @@ export const units: readonly Unit[] = [
     {
       id: "en-home-gh",
       title: "Home row: G and H",
-      hint: "G і H — у центрі. Вказівні пальці роблять крок до середини.",
+      hint: "[k]G[/k] і [k]H[/k] — у центрі. Вказівні пальці роблять крок до середини.",
       text: "ggg hhh gh hg gas has had hall shall gag flash glad dash",
       goal: BEGINNER,
       newKeys: "gh"
@@ -341,7 +341,7 @@ export const units: readonly Unit[] = [
     {
       id: "en-home-words",
       title: "Home row words",
-      hint: "Усі вісім пальців на ASDF JKL;. Друкуй рівно.",
+      hint: "Усі вісім пальців на [k]A[/k] [k]S[/k] [k]D[/k] [k]F[/k] [k]J[/k] [k]K[/k] [k]L[/k] [k];[/k]. Друкуй рівно.",
       text: "dad sad lad all fall ask flask salad alfalfa lads adds",
       goal: HOME_ROW,
       newKeys: ""
@@ -351,7 +351,7 @@ export const units: readonly Unit[] = [
     {
       id: "en-top-ei",
       title: "Top row: E and I",
-      hint: "E — лівий середній палець, I — правий середній.",
+      hint: "[k]E[/k] — лівий середній палець, [k]I[/k] — правий середній.",
       text: "eee iii ei ie see fee lie like idea head field shield life slide hike",
       goal: ROWS,
       newKeys: "ei"
@@ -359,7 +359,7 @@ export const units: readonly Unit[] = [
     {
       id: "en-top-ru",
       title: "Top row: R and U",
-      hint: "R — лівий вказівний, U — правий вказівний.",
+      hint: "[k]R[/k] — лівий вказівний, [k]U[/k] — правий вказівний.",
       text: "rrr uuu ru ur rude fur rule red read hurl rug sugar user fire huge",
       goal: ROWS,
       newKeys: "ru"
@@ -367,7 +367,7 @@ export const units: readonly Unit[] = [
     {
       id: "en-top-ty",
       title: "Top row: T and Y",
-      hint: "T і Y — у центрі ряду, вказівні пальці тягнуться навскіс угору.",
+      hint: "[k]T[/k] і [k]Y[/k] — у центрі ряду, вказівні пальці тягнуться навскіс угору.",
       text: "ttt yyy ty yt try the they yet day eyes tidy year thirty truly",
       goal: ROWS,
       newKeys: "ty"
@@ -375,7 +375,7 @@ export const units: readonly Unit[] = [
     {
       id: "en-top-wo",
       title: "Top row: W and O",
-      hint: "W — лівий безіменний, O — правий безіменний.",
+      hint: "[k]W[/k] — лівий безіменний, [k]O[/k] — правий безіменний.",
       text: "www ooo wo ow two owl low how word world wood show follow",
       goal: ROWS,
       newKeys: "wo"
@@ -383,7 +383,7 @@ export const units: readonly Unit[] = [
     {
       id: "en-top-qp",
       title: "Top row: Q and P",
-      hint: "Q — лівий мізинець, P — правий мізинець.",
+      hint: "[k]Q[/k] — лівий мізинець, [k]P[/k] — правий мізинець.",
       text: "qqq ppp qp pq quiet quite queue pupil paper apple purple quality equip",
       goal: ROWS,
       newKeys: "qp"
@@ -393,7 +393,7 @@ export const units: readonly Unit[] = [
     {
       id: "en-bottom-cvm",
       title: "Bottom row: C, V and M",
-      hint: "C — лівий середній, V — лівий вказівний, M — правий вказівний.",
+      hint: "[k]C[/k] — лівий середній, [k]V[/k] — лівий вказівний, [k]M[/k] — правий вказівний.",
       text: "ccc vvv mmm cvm car vase map came move vivid cream music victory camp",
       goal: ROWS,
       newKeys: "cvm"
@@ -401,7 +401,7 @@ export const units: readonly Unit[] = [
     {
       id: "en-bottom-nb",
       title: "Bottom row: N and B",
-      hint: "B — лівий вказівний, N — правий вказівний.",
+      hint: "[k]B[/k] — лівий вказівний, [k]N[/k] — правий вказівний.",
       text: "nnn bbb nb bn ban bin nobody bean brown number banana bring",
       goal: ROWS,
       newKeys: "nb"
@@ -409,7 +409,7 @@ export const units: readonly Unit[] = [
     {
       id: "en-bottom-x",
       title: "Bottom row: X, comma and period",
-      hint: "X — лівий безіменний, кома — правий середній, крапка — правий безіменний.",
+      hint: "[k]X[/k] — лівий безіменний, кома — правий середній, крапка — правий безіменний.",
       text: "xxx ,,, ... fox, box, six. next, mix. taxi, wax. text.",
       goal: ROWS,
       newKeys: "x,."
@@ -417,7 +417,7 @@ export const units: readonly Unit[] = [
     {
       id: "en-bottom-z",
       title: "Bottom row: Z and slash",
-      hint: "Z — лівий мізинець, / — правий мізинець.",
+      hint: "[k]Z[/k] — лівий мізинець, [k]/[/k] — правий мізинець.",
       text: "zzz /// zoo zebra zero lazy fuzzy and/or yes/no a/b size",
       goal: ROWS,
       newKeys: "z/"
@@ -425,7 +425,7 @@ export const units: readonly Unit[] = [
     {
       id: "en-bottom-caps",
       title: "Capital letters",
-      hint: "Shift натискай мізинцем іншої руки.",
+      hint: "[k]Shift[/k] натискай мізинцем іншої руки.",
       text: "Kyiv Lviv Odesa Anna Mark Monday July Ukraine London Paris",
       goal: SIGNS,
       newKeys: ""

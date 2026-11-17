@@ -20,6 +20,7 @@ import {
 } from "../core/index.ts"
 import { Keyboard } from "./Keyboard.tsx"
 import { type Report, TypingTrainer } from "./TypingTrainer.tsx"
+import { plainText } from "./rich-text.ts"
 
 interface Props {
   readonly layout: LayoutId
@@ -125,7 +126,7 @@ export const CourseView = ({ layout, progress, onProgress, large, onLessonComple
                       type="button"
                       className={["edu-course-lesson", locked ? "edu-course-locked" : "", best ? "edu-course-done" : ""].join(" ")}
                       onClick={() => open(l)}
-                      title={locked ? "Радимо спершу пройти попередній урок" : l.hint}
+                      title={locked ? "Радимо спершу пройти попередній урок" : plainText(l.hint)}
                     >
                       <span className="edu-course-title">
                         {locked && <span aria-label="Ще не відкрито">🔒 </span>}
