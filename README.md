@@ -184,4 +184,4 @@ Every push to `main` runs the tests and deploys the demo to GitHub Pages: see th
 
 ## License
 
-[MIT](LICENSE)
+The code is [MIT](LICENSE). The sprites of «Клавішне королівство» in [`src/ui/kingdom/art/`](src/ui/kingdom/art/LICENSE.md) are from [Tiny Swords (Update 010)](https://pixelfrog-assets.itch.io/tiny-swords) by Pixel Frog, the old version the author publishes as «TS_old version_CC0 Licensed»: public domain (CC0 1.0), not under the MIT licence. The newer Tiny Swords Free Pack 2025 may not be redistributed and is not used here.
