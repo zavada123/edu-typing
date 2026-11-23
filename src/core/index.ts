@@ -1,6 +1,7 @@
 export * from "./certificate.ts"
 export * from "./games.ts"
 export * from "./generate.ts"
+export * from "./hotkeys.ts"
 export * from "./layouts.ts"
 export * from "./lessons.ts"
 export * from "./place.ts"

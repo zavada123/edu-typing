@@ -1,14 +1,26 @@
 import { useRef, useState } from "react"
-import { type Certificate, learnedKeys, type LayoutId, type Lesson, lessons, type Progress, type StudioPlace } from "../core/index.ts"
+import {
+  type Certificate,
+  type HotkeyLesson,
+  hotkeyLessons,
+  learnedKeys,
+  type LayoutId,
+  type Lesson,
+  lessons,
+  type Progress,
+  type StudioPlace
+} from "../core/index.ts"
 import { CourseView } from "./CourseView.tsx"
 import { useFullscreen } from "./fullscreen.ts"
 import { BalloonsGame, type GameId, LetterfallGame } from "./games.tsx"
+import type { HotkeyReport } from "./HotkeyTrainer.tsx"
+import { HotkeysView } from "./HotkeysView.tsx"
 import { KingdomGame } from "./kingdom/KingdomGame.tsx"
 import { TypingTest } from "./TypingTest.tsx"
 import type { Report } from "./TypingTrainer.tsx"
 import { DEFAULT_STORAGE_KEY, useProgress } from "./useProgress.ts"
 
-export type StudioTab = "course" | "games" | "test"
+export type StudioTab = "course" | "games" | "hotkeys" | "test"
 
 interface Props {
   /** localStorage key for progress; give each signed-in student their own key. */
@@ -21,6 +33,8 @@ interface Props {
   readonly issuer?: string
   readonly onCertificate?: (certificate: Certificate) => void
   readonly onLessonComplete?: (report: Report) => void
+  /** A shortcut lesson is finished: stars and mistakes. */
+  readonly onHotkeyLessonComplete?: (report: HotkeyReport) => void
   /**
    * The whole progress after each change (lesson, game, test). The host page can keep it on its server and give it
    * back with `mergeProgress` on another device. Pass a stable function (`useCallback`).
@@ -39,6 +53,9 @@ interface Props {
 const lessonOf = (place: StudioPlace | undefined): Lesson | undefined =>
   place?.tab === "lesson" ? lessons.find((l) => l.id === place.lesson) : undefined
 
+const hotkeyLessonOf = (place: StudioPlace | undefined): HotkeyLesson | undefined =>
+  place?.tab === "hotkeys" ? hotkeyLessons.find((l) => l.id === place.lesson) : undefined
+
 const tabOf = (place: StudioPlace | undefined, fallback: StudioTab): StudioTab => {
   if (place === undefined) return fallback
   return place.tab === "lesson" ? "course" : place.tab
@@ -47,6 +64,7 @@ const tabOf = (place: StudioPlace | undefined, fallback: StudioTab): StudioTab =
 const TABS: ReadonlyArray<{ readonly id: StudioTab; readonly label: string }> = [
   { id: "course", label: "Уроки" },
   { id: "games", label: "Ігри" },
+  { id: "hotkeys", label: "Гарячі клавіші" },
   { id: "test", label: "Тест і сертифікат" }
 ]
 
@@ -66,6 +84,7 @@ export const TypingStudio = ({
   issuer = "Тренажер сліпого друку",
   onCertificate,
   onLessonComplete,
+  onHotkeyLessonComplete,
   onProgressChange,
   initialTab = "course",
   initialPlace,
@@ -74,11 +93,13 @@ export const TypingStudio = ({
   const [progress, update] = useProgress(storageKey, onProgressChange)
   // The linked lesson opens once: after any move the lesson map opens as usual.
   const [initialLesson, setInitialLesson] = useState(() => lessonOf(initialPlace))
+  const [initialHotkeys, setInitialHotkeys] = useState(() => hotkeyLessonOf(initialPlace))
   const [tab, setTab] = useState<StudioTab>(() => tabOf(initialPlace, initialTab))
   const [layout, setLayout] = useState<LayoutId>(initialLesson?.layout ?? "uk")
   const [game, setGame] = useState<GameId>(initialPlace?.tab === "games" ? initialPlace.game : "letterfall")
   const moved = (place: StudioPlace) => {
     setInitialLesson(undefined)
+    setInitialHotkeys(undefined)
     onPlaceChange?.(place)
   }
   const placeOfTab = (t: StudioTab): StudioPlace => (t === "games" ? { tab: "games", game } : { tab: t })
@@ -151,6 +172,17 @@ export const TypingStudio = ({
           {game === "balloons" && <BalloonsGame key={layout} layout={layout} progress={progress} onProgress={update} learned={learned} />}
           {game === "kingdom" && <KingdomGame key={layout} layout={layout} progress={progress} onProgress={update} learned={learned} />}
         </div>
+      )}
+
+      {tab === "hotkeys" && (
+        <HotkeysView
+          layout={layout}
+          progress={progress}
+          onProgress={update}
+          initialLesson={initialHotkeys}
+          onLessonChange={(l) => moved(l === undefined ? { tab: "hotkeys" } : { tab: "hotkeys", lesson: l.id })}
+          onLessonComplete={onHotkeyLessonComplete}
+        />
       )}
 
       {tab === "test" && (

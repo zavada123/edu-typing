@@ -13,6 +13,8 @@ interface Props {
   readonly onTap?: (char: string) => void
   /** Error rate 0–1 by key code: the key gets a red glow, stronger for more mistakes. */
   readonly heat?: ReadonlyMap<string, number> | undefined
+  /** More keys to light, e.g. Ctrl and C for a shortcut. */
+  readonly marks?: ReadonlySet<string> | undefined
 }
 
 /** A key that types nothing: Tab, Shift, Ctrl… Width in key units, a row is 15 units. */
@@ -47,7 +49,7 @@ const BUMPS = new Set(["KeyF", "KeyJ"])
 const isLetter = (c: string): boolean => c.toUpperCase() !== c.toLowerCase()
 
 /** Real keyboard look: keycaps with Latin and Cyrillic, fingers as a coloured strip. */
-export const Keyboard = ({ layout, target, shift, wrong = false, pressed, onTap, heat }: Props) => {
+export const Keyboard = ({ layout, target, shift, wrong = false, pressed, onTap, heat, marks }: Props) => {
   const other = layout.id === "uk" ? EN : UK
   const otherByCode = new Map(other.rows.flat().map((k) => [k.code, k]))
 
@@ -58,7 +60,7 @@ export const Keyboard = ({ layout, target, shift, wrong = false, pressed, onTap,
     [
       "edu-kb-key",
       finger ? `edu-kb-${finger}` : "edu-kb-nofinger",
-      code === target || code === shift ? "edu-kb-target" : "",
+      code === target || code === shift || marks?.has(code) === true ? "edu-kb-target" : "",
       wrong && code === target ? "edu-kb-wrong" : "",
       pressed?.has(code) ? "edu-kb-down" : "",
       extra

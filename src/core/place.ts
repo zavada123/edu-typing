@@ -1,3 +1,4 @@
+import { hotkeyLessons } from "./hotkeys.ts"
 import { lessons } from "./lessons.ts"
 
 /** Typing games of the studio. */
@@ -13,15 +14,16 @@ export type StudioPlace =
   | { readonly tab: "lesson"; readonly lesson: string }
   | { readonly tab: "games"; readonly game: GameId }
   | { readonly tab: "test" }
+  | { readonly tab: "hotkeys"; readonly lesson?: string }
 
 const isGameId = (text: string): text is GameId => GAME_IDS.some((g) => g === text)
 
-/** Address parameters of a place: `?lesson=<id>`, `?game=<id>` or `?tab=test`. */
-export const PLACE_PARAMS = ["lesson", "game", "tab"] as const
+/** Address parameters of a place: `?lesson=<id>`, `?game=<id>`, `?hotkeys=<id>` or `?tab=test|hotkeys`. */
+export const PLACE_PARAMS = ["lesson", "game", "hotkeys", "tab"] as const
 
 /**
- * The place of an address query (`location.search`): `?lesson=<lesson id>`, `?game=<game id>`, `?tab=test` or
- * `?tab=course`. No parameter or an unknown lesson or game gives `undefined`.
+ * The place of an address query (`location.search`): `?lesson=<lesson id>`, `?game=<game id>`, `?hotkeys=<shortcut
+ * lesson id>`, `?tab=test`, `?tab=hotkeys` or `?tab=course`. No parameter or an unknown lesson or game gives `undefined`.
  */
 export const parseStudioPlace = (search: string): StudioPlace | undefined => {
   const params = new URLSearchParams(search)
@@ -29,8 +31,11 @@ export const parseStudioPlace = (search: string): StudioPlace | undefined => {
   if (lesson !== null) return lessons.some((l) => l.id === lesson) ? { tab: "lesson", lesson } : undefined
   const game = params.get("game")
   if (game !== null) return isGameId(game) ? { tab: "games", game } : undefined
+  const hotkeys = params.get("hotkeys")
+  if (hotkeys !== null) return hotkeyLessons.some((l) => l.id === hotkeys) ? { tab: "hotkeys", lesson: hotkeys } : undefined
   const tab = params.get("tab")
   if (tab === "test") return { tab: "test" }
+  if (tab === "hotkeys") return { tab: "hotkeys" }
   if (tab === "course") return { tab: "course" }
   return undefined
 }
@@ -49,5 +54,7 @@ export const formatStudioPlace = (place: StudioPlace): Readonly<Record<string, s
       return { game: place.game }
     case "test":
       return { tab: "test" }
+    case "hotkeys":
+      return place.lesson === undefined ? { tab: "hotkeys" } : { hotkeys: place.lesson }
   }
 }
