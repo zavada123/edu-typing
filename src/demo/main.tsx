@@ -1,6 +1,6 @@
 import { StrictMode, useState } from "react"
 import { createRoot } from "react-dom/client"
-import { lessons } from "../core/index.ts"
+import { lessons, parseStudioPlace } from "../core/index.ts"
 import { TypingStudio } from "../ui/TypingStudio.tsx"
 import { TypingTrainer, type Report } from "../ui/TypingTrainer.tsx"
 import { DuelDemo } from "./DuelDemo.tsx"
@@ -37,7 +37,7 @@ const Demo = () => {
         <strong>Тренажер друку</strong>
       </header>
       <main className="demo-main">
-        {duel ? <DuelDemo /> : id ? <TypingTrainer key={lesson.id} lesson={lesson} large={large} onComplete={onComplete} /> : <TypingStudio large={large} issuer="edu-typing" />}
+        {duel ? <DuelDemo /> : id ? <TypingTrainer key={lesson.id} lesson={lesson} large={large} onComplete={onComplete} /> : <TypingStudio large={large} issuer="edu-typing" initialPlace={parseStudioPlace(window.location.search)} />}
         {last && (
           <details className="demo-report">
             <summary>Що отримає застосунок (onComplete)</summary>

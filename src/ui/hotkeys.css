@@ -1,0 +1,266 @@
+/* Shortcut lessons. Same colours as studio.css. */
+.edu-hk {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--edu-bg, #f8fafc);
+  border-radius: 12px;
+}
+
+.edu-hk-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+}
+
+.edu-hk-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.edu-hk-progress {
+  width: 100%;
+  height: 8px;
+  accent-color: var(--edu-accent, #2563eb);
+}
+
+.edu-hk-step {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.edu-hk-ask {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.8;
+}
+
+.edu-hk-target {
+  display: flex;
+  justify-content: center;
+  padding: 20px 12px;
+  background: #fff;
+  border: 2px solid var(--edu-line, #e2e8f0);
+  border-radius: 14px;
+  transition: border-color 120ms, background 120ms;
+}
+
+.edu-hk-right {
+  background: #f0fdf4;
+  border-color: #16a34a;
+}
+
+.edu-hk-wrong {
+  border-color: #dc2626;
+  animation: edu-hk-shake 240ms;
+}
+
+@keyframes edu-hk-shake {
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edu-hk-wrong {
+    animation: none;
+  }
+}
+
+.edu-hk-combos {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  vertical-align: middle;
+}
+
+.edu-hk-combo {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.edu-hk-combo kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 0.1em 0.45em;
+  font: inherit;
+  font-size: 0.9em;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--edu-fg, #0f172a);
+  background: linear-gradient(180deg, #fff 0%, #f1f5f9 100%);
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  box-shadow: 0 2px 0 #94a3b8;
+}
+
+.edu-hk-plus {
+  margin: 0 0.25em;
+  color: var(--edu-muted, #64748b);
+}
+
+.edu-hk-or {
+  color: var(--edu-muted, #64748b);
+  font-weight: 400;
+}
+
+.edu-hk-combo-big {
+  font-size: clamp(22px, 5vw, 36px);
+}
+
+.edu-hk-combo-big kbd {
+  padding: 0.15em 0.6em;
+  border-radius: 10px;
+  box-shadow: 0 4px 0 #94a3b8;
+}
+
+.edu-hk-say {
+  margin: 0;
+  min-height: 1.4em;
+  color: var(--edu-muted, #64748b);
+}
+
+.edu-hk-say-right {
+  color: #15803d;
+  font-weight: 700;
+}
+
+.edu-hk-say-wrong {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.edu-hk-field {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 20px;
+  line-height: 1.5;
+  color: var(--edu-fg, #0f172a);
+  background: #fff;
+  border: 2px solid var(--edu-line, #e2e8f0);
+  border-radius: 12px;
+  resize: vertical;
+}
+
+.edu-hk-field:focus {
+  outline: none;
+  border-color: var(--edu-accent, #2563eb);
+}
+
+.edu-hk-field:read-only {
+  background: #f0fdf4;
+  border-color: #16a34a;
+}
+
+.edu-hk-needs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  color: var(--edu-muted, #64748b);
+}
+
+.edu-hk-need-ok {
+  color: #15803d;
+  font-weight: 700;
+}
+
+.edu-hk-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.edu-hk-option {
+  min-height: 48px;
+  padding: 8px 12px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--edu-fg, #0f172a);
+  background: #fff;
+  border: 2px solid var(--edu-line, #e2e8f0);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.edu-hk-option:hover:not(:disabled) {
+  border-color: var(--edu-accent, #2563eb);
+}
+
+.edu-hk-option-wrong {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fecaca;
+  cursor: default;
+}
+
+.edu-hk-option-right {
+  color: #15803d;
+  background: #f0fdf4;
+  border-color: #16a34a;
+}
+
+.edu-hk-end {
+  justify-content: center;
+}
+
+.edu-hk-sheet summary {
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.edu-hk-sheet table {
+  width: 100%;
+  margin-top: 8px;
+  border-collapse: collapse;
+}
+
+.edu-hk-sheet th,
+.edu-hk-sheet td {
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--edu-line, #e2e8f0);
+}
+
+.edu-hk-sheet small {
+  display: block;
+  color: var(--edu-muted, #64748b);
+}
+
+@media (max-width: 560px) {
+  .edu-hk-sheet tr {
+    display: grid;
+    grid-template-columns: 1fr;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--edu-line, #e2e8f0);
+  }
+
+  .edu-hk-sheet th,
+  .edu-hk-sheet td {
+    padding: 2px 0;
+    border: 0;
+  }
+}
+
+.edu-hk-card-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  font-size: 13px;
+}

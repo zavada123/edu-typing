@@ -1,6 +1,8 @@
 export * from "./core/index.ts"
 export { CertificateView, printCertificate } from "./ui/CertificateView.tsx"
 export { CourseView } from "./ui/CourseView.tsx"
+export { HotkeysView } from "./ui/HotkeysView.tsx"
+export { HotkeyTrainer, type HotkeyReport } from "./ui/HotkeyTrainer.tsx"
 export { BalloonsGame, type GameId, LetterfallGame } from "./ui/games.tsx"
 export { DuelGame, type DuelGameProps } from "./ui/kingdom/DuelGame.tsx"
 export { KingdomGame } from "./ui/kingdom/KingdomGame.tsx"

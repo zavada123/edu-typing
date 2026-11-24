@@ -73,6 +73,16 @@ export const recordLessonRun = (p: Progress, lesson: Lesson, r: Result, s: Score
 export const recordLesson = (p: Progress, lesson: Lesson, r: Result, s: Score): Progress =>
   recordLessonRun(recordKeys(p, lesson.text.slice(0, r.chars), r.mistakesByChar), lesson, r, s)
 
+/**
+ * Keep the best run of a shortcut lesson (`hk-…`): more stars, then higher accuracy. It goes to the lesson records with
+ * speed 0, so a host that keeps the progress on its server keeps it without changes.
+ */
+export const recordHotkeyLesson = (p: Progress, lessonId: string, stars: Score["stars"], accuracy: number): Progress => {
+  const old = p.lessons[lessonId]
+  const better = !old || stars > old.stars || (stars === old.stars && accuracy > old.accuracy)
+  return better ? { ...p, lessons: { ...p.lessons, [lessonId]: { stars, cpm: 0, accuracy } } } : p
+}
+
 /** Keep the higher test result; accuracy breaks a tie. */
 export const recordTest = (p: Progress, t: TestRecord): Progress => {
   const old = p.bestTest
