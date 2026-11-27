@@ -19,6 +19,7 @@ import {
 } from "../core/index.ts"
 import { Keyboard } from "./Keyboard.tsx"
 import { useFullscreen } from "./fullscreen.ts"
+import { useKeepTypingFocus } from "./keepFocus.ts"
 import "./studio.css"
 import "./typing.css"
 import "./rich-text.css"
@@ -89,6 +90,7 @@ export const TypingTrainer = ({ lesson, onComplete, large = false, timeLimitMs, 
 
   // preventScroll: the trainer may sit low on a long page; focus must not jump there.
   useEffect(() => boxRef.current?.focus({ preventScroll: true }), [])
+  useKeepTypingFocus(boxRef)
 
   const running = session.startedAt !== undefined && !isFinished(session)
   useEffect(() => {

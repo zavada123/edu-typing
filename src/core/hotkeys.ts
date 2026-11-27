@@ -423,6 +423,18 @@ export const hotkeyLessons: readonly HotkeyLesson[] = [
   }
 ]
 
+/**
+ * Keys that compact keyboards (75%, 65%, laptops) often lack or hide behind Fn: Home, End and Delete. A task with
+ * them can be skipped without a mistake, so such a keyboard still gets three stars.
+ */
+const COMPACT_MISSING = new Set(["Home", "End", "Delete"])
+
+/** Every combo of the shortcut on the platform needs a key that a compact keyboard may lack. */
+export const mayBeMissing = (h: Hotkey, platform: Platform): boolean => {
+  const combos = combosOf(h, platform)
+  return combos.length > 0 && combos.every((text) => COMPACT_MISSING.has(parseCombo(text).code))
+}
+
 /** Tasks of the lesson that work on the platform: a Mac has no version of some Windows shortcuts. */
 export const tasksFor = (lesson: HotkeyLesson, platform: Platform): readonly HotkeyTask[] =>
   lesson.tasks.filter((t) => t.kind === "edit" || combosOf(hotkeyById(t.hotkey), platform).length > 0)

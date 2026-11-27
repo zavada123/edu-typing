@@ -13,6 +13,7 @@ import {
   isModifierOnly,
   type KeyEventLike,
   matches,
+  mayBeMissing,
   parseCombo,
   promptParts,
   quizOptions,
@@ -178,5 +179,14 @@ describe("score", () => {
     expect(one.lessons["hk-copy"]).toEqual({ stars: 2, cpm: 0, accuracy: 80 })
     expect(recordHotkeyLesson(one, "hk-copy", 1, 100)).toBe(one)
     expect(recordHotkeyLesson(one, "hk-copy", 2, 90).lessons["hk-copy"]?.accuracy).toBe(90)
+  })
+})
+
+describe("compact keyboards", () => {
+  test("Home, End and Delete shortcuts may be missing; Ctrl+C and Ctrl+Backspace may not", () => {
+    for (const id of ["home", "end", "selectToEnd", "deleteWordRight", "docStart", "docEnd"]) expect(mayBeMissing(hotkeyById(id), "pc"), id).toBe(true)
+    for (const id of ["copy", "deleteWord", "wordLeft", "undo"]) expect(mayBeMissing(hotkeyById(id), "pc"), id).toBe(false)
+    // A Mac jumps to the line start with Cmd+←: nothing to skip.
+    expect(mayBeMissing(hotkeyById("home"), "mac")).toBe(false)
   })
 })
