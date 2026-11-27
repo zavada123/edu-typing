@@ -13,6 +13,7 @@ import {
   LAYOUTS,
   type LayoutId,
   matches,
+  mayBeMissing,
   type Platform,
   type PressTask,
   quizOptions,
@@ -41,6 +42,9 @@ const NEXT_DELAY_MS = 700
 
 /** Keys the page lets the browser handle itself: F5, F12 and the rest. */
 const isFunctionKey = (code: string): boolean => /^F\d+$/u.test(code)
+
+/** A tip for keyboards without Home, End or Delete. */
+const COMPACT_TIP = "На маленьких клавіатурах ці клавіші часто ховаються під Fn: спробуй Fn зі стрілкою або з Backspace."
 
 /** Keys that the on-screen keyboard has: letters, digits, Backspace and the modifiers. */
 const onKeyboard = (code: string): boolean => /^(Key|Digit)/u.test(code) || code === "Backspace"
@@ -107,6 +111,14 @@ const PressStep = ({ task, platform, layout, onDone, onMistake }: StepProps & { 
         {state === "right" ? `✓ ${say}` : say || hotkey.about}
       </p>
       {showKeyboard && <Keyboard layout={LAYOUTS[layout]} marks={new Set(codes)} pressed={held} />}
+      {mayBeMissing(hotkey, platform) && state !== "right" && (
+        <div className="edu-hk-missing">
+          <span>{COMPACT_TIP}</span>
+          <button type="button" className="edu-btn edu-btn-ghost" onClick={onDone}>
+            У мене немає такої клавіші: пропустити
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -116,8 +128,11 @@ const EditStep = ({ task, platform, onDone }: StepProps & { readonly task: EditT
   const [text, setText] = useState(task.start)
   const [used, setUsed] = useState<ReadonlySet<string>>(new Set())
   const [changed, setChanged] = useState(false)
+  // Shortcuts the keyboard has no key for (Home, End, Delete on a compact one): they count as used.
+  const [waived, setWaived] = useState<ReadonlySet<string>>(new Set())
   const box = useRef<HTMLTextAreaElement>(null)
-  const state = editState(task, text, used, changed)
+  const counted = new Set([...used, ...waived])
+  const state = editState(task, text, counted, changed)
 
   useEffect(() => {
     const el = box.current
@@ -133,7 +148,11 @@ const EditStep = ({ task, platform, onDone }: StepProps & { readonly task: EditT
     setUsed(new Set())
     setChanged(false)
   }
-  const missing = task.needs.filter((id) => !used.has(id))
+  const missing = task.needs.filter((id) => !counted.has(id))
+  const waive = (id: string) => {
+    setWaived((w) => new Set(w).add(id))
+    box.current?.focus({ preventScroll: true })
+  }
 
   return (
     <div className="edu-hk-step">
@@ -173,11 +192,17 @@ const EditStep = ({ task, platform, onDone }: StepProps & { readonly task: EditT
       <div className="edu-hk-needs">
         Використай:{" "}
         {task.needs.map((id) => (
-          <span key={id} className={used.has(id) ? "edu-hk-need edu-hk-need-ok" : "edu-hk-need"}>
-            <HotkeyKeys id={id} platform={platform} /> {used.has(id) ? "✓" : ""}
+          <span key={id} className={counted.has(id) ? "edu-hk-need edu-hk-need-ok" : "edu-hk-need"}>
+            <HotkeyKeys id={id} platform={platform} /> {used.has(id) ? "✓" : waived.has(id) ? "пропущено" : ""}
+            {!counted.has(id) && mayBeMissing(hotkeyById(id), platform) && (
+              <button type="button" className="edu-hk-skip" onClick={() => waive(id)}>
+                немає такої клавіші
+              </button>
+            )}
           </span>
         ))}
       </div>
+      {missing.some((id) => mayBeMissing(hotkeyById(id), platform)) && <p className="edu-hk-say">{COMPACT_TIP} Якщо й так не виходить, натисни «немає такої клавіші» і зроби цей крок мишкою.</p>}
       {state === "needKeys" && (
         <p className="edu-hk-say edu-hk-say-wrong" aria-live="polite">
           Текст правильний, але зроби це клавішами: {missing.map((id) => hotkeyById(id).name.toLowerCase()).join(", ")}. Почни знову і

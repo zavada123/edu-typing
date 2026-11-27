@@ -264,3 +264,23 @@
   gap: 6px 10px;
   font-size: 13px;
 }
+
+.edu-hk-missing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  color: var(--edu-muted, #64748b);
+}
+
+.edu-hk-skip {
+  margin-left: 6px;
+  padding: 0;
+  font: inherit;
+  font-size: 0.9em;
+  color: var(--edu-accent, #2563eb);
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
